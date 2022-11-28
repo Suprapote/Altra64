@@ -107,6 +107,7 @@ typedef struct
     int text_offset;
     int hide_sysfolder;
     int sd_speed;
+    int save_backup;
 
 } configuration;
 
@@ -236,6 +237,7 @@ u8 scroll_behaviour = 0; //1=classic 0=new page-system
 u8 ext_type = 0;         //0=classic 1=org os
 u8 sd_speed = 1;         // 1=25Mhz 2=50Mhz
 u8 hide_sysfolder = 0;
+u8 save_backup = 1;
 char *background_image;
 
 //mp3
@@ -821,6 +823,10 @@ static int configHandler(void *user, const char *section, const char *name, cons
     else if (MATCH("ed64", "background_image"))
     {
         pconfig->background_image = strdup(value);
+    }
+    else if(MATCH("ed64", "save_backup"))
+    {
+        pconfig->save_backup = atoi(value);
     }
     else if (MATCH("user", "name"))
     {
@@ -1632,39 +1638,23 @@ int backupSaveData(display_context_t disp)
 int saveTypeFromSd(display_context_t disp, char *rom_name, int stype)
 {
     TRACE(disp, rom_filename);
+
     const char* save_type_extension = saveTypeToExtension(stype, ext_type);
-    TCHAR fname[MAX_SUPPORTED_PATH_LEN] = {0};
-    int save_count = 0; //TODO: once this crosses 9999 bad infinite-loop type things happen, look into that one day
-    FRESULT result;
-    FILINFO fnoba;
-    printText("Finding latest save slot...", 3, -1, disp);
-    display_show(disp);
-    while (true) {
-        sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%04d.%s", save_path, rom_name, save_count, save_type_extension);
-        result = f_stat (fname, &fnoba);
-        if (result != FR_OK) {
-            // we found our first missing save slot, break
-            break;
-        }
-        ++save_count;
-    }
-    if (save_count > 0) {
-        // we've went 1 past the end, so back up
-        sprintf(fname, "Found latest save slot: %04d", --save_count);
-        printText(fname, 3, -1, disp);
-        sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%04d.%s", save_path, rom_name, save_count, save_type_extension);
-    } else {
-        // not even a 0000 was found, so look at the original name before numbering was implemented
-        printText("No save slot found!", 3, -1, disp);
-        printText("Looking for non-numbered file...", 3, -1, disp);
-        sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%s", save_path, rom_name, save_type_extension);
-    }
-    display_show(disp);
+    TCHAR fname[256] = {0};
+    sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%s", save_path, rom_name, save_type_extension);
+
+    TCHAR fname1[50] = {0};
+    sprintf(fname1, "/"ED64_FIRMWARE_PATH"/%s/", save_path);
+    printText(fname1, 3, -1, disp);
+    TCHAR fname2[50] = {0};
+    sprintf(fname2, "%s.%s", rom_name, save_type_extension);
+    printText(fname2, 3, -1, disp);
 
     int size = saveTypeToSize(stype); // int byte
     uint8_t cartsave_data[size];
 
     FIL file;
+    FRESULT result;
     UINT bytesread;
     result = f_open(&file, fname, FA_READ);
 
@@ -1736,28 +1726,85 @@ int saveTypeToSd(display_context_t disp, char *rom_name, int stype)
     //after reset create new savefile
     const char* save_type_extension = saveTypeToExtension(stype, ext_type);
     TCHAR fname[MAX_SUPPORTED_PATH_LEN];
-    int save_count = 0; //TODO: once this crosses 9999 bad infinite-loop type things happen, look into that one day
-    FRESULT result;
-    FILINFO fnoba;
-    printText("Finding unused save slot...", 3, -1, disp);
-    display_show(disp);
-    while (true) {
-        sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%04d.%s", save_path, rom_name, save_count, save_type_extension);
-        result = f_stat (fname, &fnoba);
-        if (result != FR_OK) {
-            // we found our first missing save slot, break
-            break;
+
+    if (save_backup == 1)
+    {
+        int save_count = 0;
+        int i;
+        char currsave[256];
+        char nextsave[256];
+        FILINFO fnoba;
+        printText("Finding unused save slot...", 3, -1, disp);
+        display_show(disp);
+        //check for non-numbered save file
+        sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%s", save_path, rom_name, save_type_extension);
+        result = f_stat(fname, &fnoba);
+        if (result != FR_OK)
+        {
+            //no saves found, create the first one
+            printText("No saves found. Creating save...");
+            display_show(disp);
+            sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%s", save_path, rom_name, save_type_extension);
+            save_count = 1;
         }
-        ++save_count;
+        if (save_count == 0)
+        {
+            //check how many save files there are
+            for (i=2; i<5; i++)
+            {
+                sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s%d.%s", save_path, rom_name, i, save_type_extension);
+                result = f_stat(fname, &fnoba);
+                if(result != FR_OK)
+                {
+                    printText("Saves found. Backing up...");
+                    display_show(disp);
+                    for(j=i; j>1; j--)
+                    {
+                        //todo: rename save j to save j+1
+                        sprintf(currsave, "/"ED64_FIRMWARE_PATH"/%s/%s%d.%s", save_path, rom_name, j, save_type_extension);
+                        sprintf(nextsave, "/"ED64_FIRMWARE_PATH"/%s/%s%d.%s", save_path, rom_name, j+1, save_type_extension);
+                        f_rename(currsave, nextsave);
+                    }
+                    save_count = 2;
+                    break;
+                }
+            }
+        }
+        if (save_count == 0)
+        {
+            // already 4 saves; delete save #4
+            printText("4 saves found. Deleting save #4...", 3, -1, disp);
+            display_show(disp);
+            char latestsave[256];
+            sprintf(latestsave, "/"ED64_FIRMWARE_PATH"/%s/%s%d.%s", save_path, rom_name, 4, save_type_extension);
+            f_unlink(latestsave);
+            printText("Renaming remaining saves...", 3, -1, disp);
+            display_show(disp);
+            for (i=2; i<4; i++)
+            {
+                //rename file[i] to file[i+1]
+                sprintf(currsave, "/"ED64_FIRMWARE_PATH"/%s/%s%d.%s", save_path, rom_name, i, save_type_extension);
+                sprintf(nextsave, "/"ED64_FIRMWARE_PATH"/%s/%s%d.%s", save_path, rom_name, i+1, save_type_extension);
+                f_rename(currsave, nextsave);
+            }
+            save_count = 3;
+        }
+
+        if (save_count != 1) {
+            //rename numberless file to save 2
+            sprintf(currsave, "/"ED64_FIRMWARE_PATH"/%s/%s.%s", save_path, rom_name, save_type_extension);
+            sprintf(nextsave, "/"ED64_FIRMWARE_PATH"/%s/%s%d.%s", save_path, rom_name, 2, save_type_extension);
+            f_rename(currsave, nextsave);
+        }
+        //below: save latest file as numberless
+       
     }
-    sprintf(fname, "Found unused save slot: %04d", save_count);
-    printText(fname, 3, -1, disp);
-    display_show(disp);
-    sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%04d.%s", save_path, rom_name, save_count, save_type_extension);
+    sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%s", save_path, rom_name, save_type_extension);
 
     int size = saveTypeToSize(stype); // int byte
     TRACEF(disp, "size for save=%i", size);
 
+    FRESULT result;
     FIL file;
     UINT bytesread;
     result = f_open(&file, fname, FA_WRITE | FA_OPEN_ALWAYS); //Could use FA_CREATE_ALWAYS but this could lead to the posibility of the file being emptied
@@ -1857,6 +1904,7 @@ int readConfigFile(void)
             text_offset = config.text_offset;
             hide_sysfolder = config.hide_sysfolder;
             sd_speed = config.sd_speed;
+            save_backup = config.save_backup;
             background_image = config.background_image;
 
             return 1;
