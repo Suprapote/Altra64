@@ -7,7 +7,6 @@
 #include <libdragon.h>
 #include <string.h>
 #include <stdio.h>
-#include "constants.h"
 #include "types.h"
 #include "mempak.h"
 #include "memorypak.h"
@@ -188,8 +187,8 @@ void view_mpk_file(display_context_t disp, char *mpk_filename)
             32768,         /* [IN] Number of bytes to read */
             &bytesread    /* [OUT] Number of bytes read */
         );
-
-
+        
+          
         f_close(&file);
 
         printText("File contents:", 11, 5, disp);
@@ -306,7 +305,7 @@ void view_mpk_file(display_context_t disp, char *mpk_filename)
         else
         {
             printText("empty", 11, -1, disp);
-        }
+        }    
     }
 }
 
@@ -315,8 +314,7 @@ void view_mpk(display_context_t disp)
     int err;
 
     printText("Mempak content:", 11, 5, disp);
-    struct controller_data output;
-    get_accessories_present( &output);
+    get_accessories_present();
 
     /* Make sure they don't have a rumble pak inserted instead */
     switch (identify_accessory(0))
@@ -383,14 +381,14 @@ void view_mpk(display_context_t disp)
 //old function to dump a mempak to a file
 void mpk_to_file(display_context_t disp, char *mpk_filename, int quick)
 {
-    u8 buff[MAX_SUPPORTED_PATH_LEN];
+    u8 buff[64];
     u8 v = 0;
     u8 ok = 0;
 
     if (quick)
-        sprintf(buff, "/"ED64_FIRMWARE_PATH"/%s/%s", mempak_path, mpk_filename);
+        sprintf(buff, "%s%s", mempak_path, mpk_filename);
     else
-        sprintf(buff, "/"ED64_FIRMWARE_PATH"/%s/%s.MPK", mempak_path, mpk_filename);
+        sprintf(buff, "%s%s.MPK", mempak_path, mpk_filename);
 
     FRESULT fr;
     FILINFO fno;
@@ -404,7 +402,7 @@ void mpk_to_file(display_context_t disp, char *mpk_filename, int quick)
         else
             while (fr == FR_OK)
             {
-                sprintf(buff, "/"ED64_FIRMWARE_PATH"/%s/%s.%i.MPK", mempak_path, mpk_filename, v);
+                sprintf(buff, "%s%s%i.MPK", mempak_path, mpk_filename, v);
 
                 fr = f_stat(buff, &fno);
                 if (fr == FR_OK)
@@ -421,7 +419,7 @@ void mpk_to_file(display_context_t disp, char *mpk_filename, int quick)
     if (result == FR_OK)
     {
         controller_init();
-
+        
         int err = 0;
         for (int j = 0; j < 128; j++)
         {
@@ -439,9 +437,9 @@ void mpk_to_file(display_context_t disp, char *mpk_filename, int quick)
 
         f_close(&file);
 
-
+        
         sprintf(buff, "File: %s%i.MPK", mpk_filename, v);
-
+    
         printText(buff, 9, -1, disp);
         printText("backup done...", 9, -1, disp);
     }

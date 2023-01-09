@@ -86,6 +86,7 @@ typedef struct
     int version;
     const char *name;
     char *background_image;
+    char *splash_image;
     char *border_color_1;
     char *border_color_2;
     char *box_color;
@@ -108,6 +109,8 @@ typedef struct
     int hide_sysfolder;
     int sd_speed;
     int save_backup;
+    int show_splash;
+    int language;
 
 } configuration;
 
@@ -166,6 +169,7 @@ enum InputMap
     abort_screen,
     control_screen,
     delete_prompt,
+    device_screen,
 };
 enum InputMap input_mapping = file_manager;
 
@@ -238,7 +242,10 @@ u8 ext_type = 0;         //0=classic 1=org os
 u8 sd_speed = 1;         // 1=25Mhz 2=50Mhz
 u8 hide_sysfolder = 0;
 u8 save_backup = 1;
+u8 show_splash = 1;
+u8 language = 0;
 char *background_image;
+char *splash_image;
 
 //mp3
 int buf_size;
@@ -254,6 +261,22 @@ int count = 0;
 int page = 0;
 int cursor = 0;
 direntry_t *list;
+
+//language
+char *dirempty;
+char *fnddb;
+char *done;
+char *romloaded;
+char *loadgb;
+char *loading;
+char *plgmp3;
+char *savemem;
+char *save32;
+char *save128;
+char *save4k;
+char *save16k;
+char *saveflash;
+char *OpComsucc;
 
 int filesize(FILE *pFile)
 {
@@ -491,7 +514,7 @@ void display_dir(direntry_t *list, int cursor, int page, int max, int count, dis
 
     if (max == 0)
     {
-        printText("dir empty...", 3, 6, disp);
+        printText(dirempty, 3, 6, disp);
         sprintf(sel_str, "dir empty...");
         empty = 1;
     }
@@ -828,6 +851,18 @@ static int configHandler(void *user, const char *section, const char *name, cons
     {
         pconfig->save_backup = atoi(value);
     }
+    else if(MATCH("ed64", "show_splash"))
+    {
+        pconfig->show_splash = atoi(value);
+    }
+    else if (MATCH("ed64", "splash_image"))
+    {
+        pconfig->splash_image = strdup(value);
+    }
+    else if (MATCH("ed64", "language"))
+    {
+        pconfig->language = atoi(value);
+    }
     else if (MATCH("user", "name"))
     {
         pconfig->name = strdup(value);
@@ -1004,7 +1039,7 @@ void romInfoScreen(display_context_t disp, u8 *buff, int silent)
         {
             if (silent != 1)
             {
-                printText("found in db", 11, -1, disp);
+                printText(fnddb, 11, -1, disp);
                 unsigned char save_type_str[12];
                 sprintf(save_type_str, "Save: %s", saveTypeToExtension(save, ext_type));
                 printText(save_type_str, 11, -1, disp);
@@ -1102,7 +1137,7 @@ sprite_t *loadPng(u8 *png_filename)
 
 void loadgbrom(display_context_t disp, TCHAR *rom_path)
 {
-    drawShortInfoBox(disp, " loading please wait", 0);
+    drawShortInfoBox(disp, loadgb, 0);
     FRESULT result;
     FIL emufile;
     UINT emubytesread;
@@ -1176,7 +1211,7 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
         }
         else
         {
-            drawShortInfoBox(disp, " loading please wait", 0);
+            drawShortInfoBox(disp, loadgb, 0);
 
             FRESULT result;
             FIL file;
@@ -1246,7 +1281,7 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
         }
         else
         {
-            drawShortInfoBox(disp, " loading please wait", 0);
+            drawShortInfoBox(disp, loadgb, 0);
 
             FRESULT result;
             FIL file;
@@ -1295,6 +1330,7 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
 
 void loadnesrom(display_context_t disp, TCHAR *rom_path)
 {
+    drawShortInfoBox(disp, loadgb, 0);
     FRESULT result;
     FIL emufile;
     UINT emubytesread;
@@ -1344,13 +1380,13 @@ void loadnesrom(display_context_t disp, TCHAR *rom_path)
     }
 }
 
+
 //load a z64/v64/n64 rom to the sdram
 void loadrom(display_context_t disp, u8 *buff, int fast)
 {
     clearScreen(disp);
     display_show(disp);
-
-    printText("Loading ROM, Please wait:", 3, 4, disp);
+    drawShortInfoBox(disp, loadgb, 0);
 
     TCHAR filename[MAX_SUPPORTED_PATH_LEN];
     sprintf(filename, "%s", buff);
@@ -1425,7 +1461,7 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
         {
             if (fast != 1)
             {
-                printText("found in db", 3, -1, disp);
+                printText(fnddb, 3, -1, disp);
                 unsigned char save_type_str[12];
                 sprintf(save_type_str, "Save: %s", saveTypeToExtension(save, ext_type));
                 printText(save_type_str, 3, -1, disp);
@@ -1617,7 +1653,7 @@ int backupSaveData(display_context_t disp)
         printText("Copying save RAM to SD card...", 3, -1, disp);
         if (saveTypeToSd(disp, rom_filename, save_format))
         {
-            printText("Operation completed sucessfully...", 3, -1, disp);
+            printText(OpComsucc, 3, -1, disp);
         }
         else
         {
@@ -1733,6 +1769,7 @@ int saveTypeToSd(display_context_t disp, char *rom_name, int stype)
         int i;
         char currsave[256];
         char nextsave[256];
+        FRESULT result;
         FILINFO fnoba;
         printText("Finding unused save slot...", 3, -1, disp);
         display_show(disp);
@@ -1742,7 +1779,7 @@ int saveTypeToSd(display_context_t disp, char *rom_name, int stype)
         if (result != FR_OK)
         {
             //no saves found, create the first one
-            printText("No saves found. Creating save...");
+            printText("No saves found. Creating save...", 3, -1, disp);
             display_show(disp);
             sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%s", save_path, rom_name, save_type_extension);
             save_count = 1;
@@ -1750,15 +1787,15 @@ int saveTypeToSd(display_context_t disp, char *rom_name, int stype)
         if (save_count == 0)
         {
             //check how many save files there are
-            for (i=2; i<5; i++)
+            for (i = 2; i < 5; i++)
             {
                 sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s%d.%s", save_path, rom_name, i, save_type_extension);
                 result = f_stat(fname, &fnoba);
                 if(result != FR_OK)
                 {
-                    printText("Saves found. Backing up...");
+                    printText("Saves found. Backing up...", 3, -1, disp);
                     display_show(disp);
-                    for(j=i; j>1; j--)
+                    for (int j = i; j > 1; j--)
                     {
                         //todo: rename save j to save j+1
                         sprintf(currsave, "/"ED64_FIRMWARE_PATH"/%s/%s%d.%s", save_path, rom_name, j, save_type_extension);
@@ -1905,7 +1942,10 @@ int readConfigFile(void)
             hide_sysfolder = config.hide_sysfolder;
             sd_speed = config.sd_speed;
             save_backup = config.save_backup;
+            show_splash = config.show_splash;
             background_image = config.background_image;
+            splash_image= config.splash_image;
+            language = config.language;
 
             return 1;
         }
@@ -2416,6 +2456,9 @@ void playSound(int snd)
 
     if (snd == 4)
         sndPlaySFX("rom://sounds/done.wav");
+
+    if (snd == 5)
+        sndPlaySFX("rom://sounds/boot.wav");
 
 }
 
@@ -2943,22 +2986,22 @@ void drawRomConfigBox(display_context_t disp, int line)
     switch (rom_config[2])
     {
     case 0:
-        printText("    Save: Off/Mempak", 9, -1, disp);
+        printText(savemem, 9, -1, disp);
         break;
     case 1:
-        printText("    Save: Sram 32", 9, -1, disp);
+        printText(save32, 9, -1, disp);
         break;
     case 2:
-        printText("    Save: Sram 128", 9, -1, disp);
+        printText(save128, 9, -1, disp);
         break;
     case 3:
-        printText("    Save: Eeprom 4k", 9, -1, disp);
+        printText(save4k, 9, -1, disp);
         break;
     case 4:
-        printText("    Save: Eeprom 16k", 9, -1, disp);
+        printText(save16k, 9, -1, disp);
         break;
     case 5:
-        printText("    Save: Flashram", 9, -1, disp);
+        printText(saveflash, 9, -1, disp);
         break;
     default:
         break;
@@ -3154,7 +3197,7 @@ void showDeletePrompt(display_context_t disp)
     bool isdir = list[cursor].type == DT_DIR;
     
     if (sound_on)
-        playSound(2 + isdir);
+        playSound(3 + isdir);
 
     menu_delete(disp, isdir);
 }
@@ -3189,6 +3232,23 @@ void showControlScreen(display_context_t disp)
 
     menu_controls(disp);
 }
+
+void showDeviceScreen(display_context_t disp)
+{
+    while (!(disp = display_lock()))
+                ;
+    new_scroll_pos(&cursor, &page, MAX_LIST, count);
+    clearScreen(disp); //part clear?
+    display_dir(list, cursor, page, MAX_LIST, count, disp);
+    drawBoxNumber(disp, 12);
+    display_show(disp);
+
+    if (sound_on)
+        playSound(2);
+
+    menu_deviceinfo(disp);
+}
+
 void loadFile(display_context_t disp)
 {
     char name_file[256];
@@ -3213,7 +3273,7 @@ void loadFile(display_context_t disp)
     sprintf(extension, "%s", (pch + 1)); //0123456
 
 
-    if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64")) //TODO: an enum would be better
+    if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64") || !strcmp(extension, "BIN")) //TODO: an enum would be better
         ft = 1;
     else if (!strcmp(extension, "MPK"))
         ft = 2;
@@ -3315,7 +3375,7 @@ void loadFile(display_context_t disp)
         while (!(disp = display_lock()))
         ;
         clearScreen(disp);
-        drawShortInfoBox(disp, "      Loading...", 0);
+        drawShortInfoBox(disp, loading, 0);
         display_show(disp);
         long long start = 0, end = 0, curr, pause = 0, samples;
         int rate = 44100, last_rate = 44100, channels = 2;
@@ -3331,12 +3391,12 @@ void loadFile(display_context_t disp)
         while (!(disp = display_lock()))
         ;
         clearScreen(disp);
-        drawShortInfoBox(disp, "    Playing MP3", 0);
+        drawShortInfoBox(disp, plgmp3, 0);
         display_show(disp);
         input_mapping = mp3; //mp3 stop
-
-        break;
     }
+    break;
+    
     default:
         break;
     }
@@ -3344,7 +3404,6 @@ void loadFile(display_context_t disp)
 
 void handleInput(display_context_t disp, sprite_t *contr)
 {
-    //request controller
     controller_scan();
     struct controller_data keys = get_keys_down();
     struct controller_data keys_held = get_keys_held();
@@ -3465,6 +3524,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
             break;
         case mempak_menu:
             break;
+
         case char_input:
             //chr input screen
             set = 3;
@@ -3688,7 +3748,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
                 new_scroll_pos(&cursor, &page, MAX_LIST, count);
                 clearScreen(disp); //part clear?
                 display_dir(list, cursor, page, MAX_LIST, count, disp);
-                drawShortInfoBox(disp, "         done", 0);
+                drawShortInfoBox(disp, done, 0);
                 sleep(1000);
 
                 //reread filesystem
@@ -3906,7 +3966,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
                     new_scroll_pos(&cursor, &page, MAX_LIST, count);
                     clearScreen(disp); //part clear?
                     display_dir(list, cursor, page, MAX_LIST, count, disp);
-                    drawShortInfoBox(disp, "         done", 0);
+                    drawShortInfoBox(disp, done, 0);
                     input_mapping = abort_screen;
                 }
                 break;
@@ -3940,7 +4000,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
             new_scroll_pos(&cursor, &page, MAX_LIST, count);
             clearScreen(disp); //part clear?
             display_dir(list, cursor, page, MAX_LIST, count, disp);
-            drawShortInfoBox(disp, "         done", 0);
+            drawShortInfoBox(disp, done, 0);
             sleep(1000);
 
             input_mapping = abort_screen;
@@ -3968,7 +4028,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
             new_scroll_pos(&cursor, &page, MAX_LIST, count);
             clearScreen(disp); //part clear?
             display_dir(list, cursor, page, MAX_LIST, count, disp);
-            drawShortInfoBox(disp, "         done", 0);
+            drawShortInfoBox(disp, done, 0);
             sleep(1000);
             input_mapping = abort_screen;
             break;
@@ -4012,7 +4072,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
                 sprintf(extension, "%s", (pch + 1)); //0123456
 
-                if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64"))
+                if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64") || !strcmp(extension, "BIN"))
                 { //rom
                     //cfg rom
                     sprintf(rom_filename, "%s", list[cursor].filename);
@@ -4129,7 +4189,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
                 pch = strrchr(_upper_name_file, '.');
                 sprintf(extension, "%s", (pch + 1));
 
-                if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64"))
+                if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64") || !strcmp(extension, "BIN"))
                 { //rom
                     //load rom
                     while (!(disp = display_lock()))
@@ -4202,9 +4262,6 @@ void handleInput(display_context_t disp, sprite_t *contr)
             break;
 
             case mempak_menu:
-
-                        while (!(disp = display_lock()))
-                        ;
                         if (sound_on)
                           playSound(2);
 
@@ -4217,6 +4274,11 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
           case control_screen:
             showControlScreen(disp);
+            input_mapping = device_screen;
+            break;
+            
+          case device_screen:
+            showDeviceScreen(disp);
             input_mapping = none;
             break;
 
@@ -4367,7 +4429,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
                 ;
                 drawRomConfigBox(disp, 0);
                 display_show(disp);
-                drawShortInfoBox(disp, "         done", 0);
+                drawShortInfoBox(disp, done, 0);
                 toplist_reload = 1;
             }
 
@@ -4619,7 +4681,7 @@ int main(void)
         int sj = evd_readReg(REG_CFG); // not sure if this is needed!
         int save_job = evd_readReg(REG_SAV_CFG); //TODO: or the firmware is V3
 
-        if (save_job != 0)
+        if (save_job != 0 && show_splash != 1)
             fast_boot = 1;
 
         //not gamepads more or less the n64 hardware-controllers
@@ -4668,6 +4730,21 @@ int main(void)
                 break;
         }
 
+            dirempty = "Dir empty...";
+            fnddb = "Found in db";
+            done = "         done";
+            romloaded = "Rom loaded";
+            loadgb = " Loading please wait";
+            loading = "      Loading...";
+            plgmp3 = "    Playing MP3";
+            savemem = "    Save: Off/Mempak";
+            save32 = "    Save: Sram 32";
+            save128 = "    Save: Sram 128";
+            save4k = "    Save: Eeprom 4k";
+            save16k = "    Save: Eeprom 16k";
+            saveflash = "    Save: Flashram";
+            OpComsucc = "Operation completed succesfully...";
+
         init_interrupts();
 
         if (sound_on)
@@ -4690,17 +4767,19 @@ int main(void)
             ;
 
         //backgrounds from ramfs/libdragonfs
+        char splash_path[64];
+        sprintf(splash_path, "/"ED64_FIRMWARE_PATH"/wallpaper/%s", splash_image);
 
         if (!fast_boot)
         {
-            splashscreen = read_sprite("rom://sprites/splash.sprite");
+            splashscreen = loadPng(splash_path);
             graphics_draw_sprite(disp, 0, 0, splashscreen); //start-picture
             display_show(disp);
 
             if (sound_on)
             {
-                playSound(1);
-                for (int s = 0; s < 200; s++) //todo: this blocks for 2 seconds (splashscreen)! is there a better way before the main loop starts!
+                playSound(5);
+                for (int s = 0; s < 350; s++) //todo: this blocks for 2 seconds (splashscreen)! is there a better way before the main loop starts!
                 {
                     sndUpdate();
                     sleep(10);
