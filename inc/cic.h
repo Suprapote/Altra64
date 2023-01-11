@@ -1,3 +1,4 @@
+
 //
 // Copyright (c) 2017 The Altra64 project contributors
 // See LICENSE file in the project root for full license information.
@@ -13,7 +14,7 @@
 //#define CIC_6104 6104 //Unused in any game so used for Aleck64 instead
 #define CIC_6105 5
 #define CIC_6106 6
-#define CIC_5167 7 //64dd conv
+#define CIC_8303 7
 
 int get_cic(unsigned char *rom_data);
 
