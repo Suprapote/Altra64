@@ -1026,6 +1026,9 @@ void romInfoScreen(display_context_t disp, u8 *buff, int silent)
             unsigned char cartID_str[12];
             sprintf(cartID_str, "ID: %c%c%c%c", headerdata[0x3B], headerdata[0x3C], headerdata[0x3D], headerdata[0x3E]);
             printText(cartID_str, 11, -1, disp);
+
+            get_country_and_region(headerdata[0x3E], rom_name);
+            printText(rom_name, 11, -1, disp);
         }
 
         int cic, save;
@@ -3408,6 +3411,9 @@ void handleInput(display_context_t disp, sprite_t *contr)
     struct controller_data keys = get_keys_down();
     struct controller_data keys_held = get_keys_held();
 
+    if( keys.c[0].err != ERROR_NONE )
+        return;
+
     if (keys.c[0].up || keys_held.c[0].up || keys_held.c[0].y > +25)
     {
         switch (input_mapping)
@@ -4262,6 +4268,8 @@ void handleInput(display_context_t disp, sprite_t *contr)
             break;
 
             case mempak_menu:
+                        while (!(disp = display_lock()))
+                        ;
                         if (sound_on)
                           playSound(2);
 
@@ -4270,7 +4278,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
                         view_mpk(disp);
 
                         input_mapping = abort_screen;
-                        break;
+            break;
 
           case control_screen:
             showControlScreen(disp);
@@ -4570,6 +4578,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
             break;
 
         case mempak_menu:
+            break;
         case delete_prompt:
 
             while (!(disp = display_lock()))
