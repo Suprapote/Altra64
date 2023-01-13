@@ -13,5 +13,6 @@ void printText(char *msg, int x, int y, display_context_t dcon);
 void menu_about(display_context_t disp);
 void menu_controls(display_context_t disp);
 void menu_delete(display_context_t disp, bool isdir);
+void menu_deviceinfo(display_context_t disp);
 
 #endif

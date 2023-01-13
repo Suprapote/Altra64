@@ -328,7 +328,8 @@ void view_mpk(display_context_t disp)
         break;
 
     case ACCESSORY_MEMPAK:
-        if ((err = validate_mempak(0)))
+        err = validate_mempak(0);
+        if (err)
         {
             if (err == -3)
             {

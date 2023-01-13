@@ -148,6 +148,12 @@
 #define FRAM_STATUS_REG	0xA8000000
 #define FRAM_COMMAND_REG 0xA8010000
 
+//see also utils.c
+#define REGION_UNKNOWN 0   //leave auto/off
+#define REGION_NTSC    1
+#define REGION_PAL     2
+#define REGION_PAL_M   3
+
 
 
 //void romFill(...);
@@ -158,4 +164,7 @@ void swap_header(unsigned char* header, int loadlength);
 
 u8 getCicType(u8 bios_cic);
 
+void send_game_id(uint8_t* crc_hi, uint8_t* crc_lo, uint8_t media_format, uint8_t country_id);
+void get_country_and_region(unsigned char ccode, char* region_string);
+unsigned char get_region(unsigned char ccode);
 #endif
