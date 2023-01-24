@@ -209,7 +209,7 @@ int getSRAM( uint8_t *buffer, int size){
 
     PI_Init();
 
-    sleep(250); //TODO: really... 1 second, changed to 250ms... better check it still works!
+    sleep(512); //TODO: really... 1 second, changed to 250ms... better check it still works!
 
     while (dma_busy()) ;
 
@@ -260,17 +260,16 @@ int getEeprom16k(  uint8_t *buffer){
 
 int getFlashRAM( uint8_t *buffer){
     evd_setSaveType(SAVE_TYPE_SRAM96); //2
-    sleep(10);
+    sleep(512);
 
     int s = getSRAM(buffer, SAVE_SIZE_SRAM96);
     data_cache_hit_writeback_invalidate(buffer,SAVE_SIZE_SRAM96);
 
-    sleep(10);
+    sleep(512);
     evd_setSaveType(SAVE_TYPE_FLASH); //5
 
     return 1;
 }
-
 
 /*
 sram upload
@@ -332,10 +331,12 @@ int setEeprom16k(uint8_t *buffer){
 //isn't working nor finished
 int setFlashRAM(uint8_t *buffer){
     evd_setSaveType(SAVE_TYPE_SRAM96); //2
-    sleep(10);
+    sleep(512);
 
     int s = setSRAM(buffer, SAVE_SIZE_SRAM96);
+    data_cache_hit_writeback_invalidate(buffer,SAVE_SIZE_SRAM96);
 
+    sleep(512);
     evd_setSaveType(SAVE_TYPE_FLASH); //5
 
     return 1;

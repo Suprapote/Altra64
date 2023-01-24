@@ -169,7 +169,6 @@ enum InputMap
     abort_screen,
     control_screen,
     delete_prompt,
-    device_screen,
 };
 enum InputMap input_mapping = file_manager;
 
@@ -1180,7 +1179,7 @@ void loadgbrom(display_context_t disp, TCHAR *rom_path)
             f_close(&romfile);
 
             boot_cic = CIC_6102;
-            boot_save = 5; //flash
+            boot_save = 1; //flash
             force_tv = 0;  //no force
             cheats_on = 0; //cheats off
             checksum_fix_on = 0;
@@ -1188,7 +1187,12 @@ void loadgbrom(display_context_t disp, TCHAR *rom_path)
             bootRom(disp, 1);
         }
     }
+    else
+    {
+        drawShortInfoBox(disp, "  Emulator not found", 1);
+    }
 }
+
 
 void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be merged with MSX
 {
@@ -1207,7 +1211,7 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
         {
             //error
 
-            drawShortInfoBox(disp, "  error: rom > 512KB", 1);
+            drawShortInfoBox(disp, "  ERROR: ROM > 512KB", 1);
             input_mapping = abort_screen;
 
             return;
@@ -1259,6 +1263,10 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
             }
         }
     }
+    else
+    {
+        drawShortInfoBox(disp, "  Emulator not found", 1);
+    }
 }
 void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
 {
@@ -1277,7 +1285,7 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
         {
             //error
 
-            drawShortInfoBox(disp, "  error: rom > 512KB", 1);
+            drawShortInfoBox(disp, "  ERROR: ROM > 512KB", 1);
             input_mapping = abort_screen;
 
             return;
@@ -1328,6 +1336,10 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
                 bootRom(disp, 1);
             }
         }
+    }
+    else
+    {
+        drawShortInfoBox(disp, "  Emulator not found", 1);
     }
 }
 
@@ -1380,6 +1392,11 @@ void loadnesrom(display_context_t disp, TCHAR *rom_path)
 
             bootRom(disp, 1);
         }
+        
+    }
+    else
+    {
+        drawShortInfoBox(disp, "  Emulator not found", 1);
     }
 }
 
@@ -2462,6 +2479,9 @@ void playSound(int snd)
 
     if (snd == 5)
         sndPlaySFX("rom://sounds/boot.wav");
+    
+    if (snd == 6)
+        sndPlaySFX("rom://sounds/doned.wav");
 
 }
 
@@ -2539,7 +2559,7 @@ void drawShortInfoBox(display_context_t disp, char *text, u8 mode)
     if (sound_on)
     {
         if (mode == 0)
-            playSound(4);
+            playSound(6);
         else if (mode == 1)
             playSound(3);
         else if (mode == 2)
@@ -3236,22 +3256,6 @@ void showControlScreen(display_context_t disp)
     menu_controls(disp);
 }
 
-void showDeviceScreen(display_context_t disp)
-{
-    while (!(disp = display_lock()))
-                ;
-    new_scroll_pos(&cursor, &page, MAX_LIST, count);
-    clearScreen(disp); //part clear?
-    display_dir(list, cursor, page, MAX_LIST, count, disp);
-    drawBoxNumber(disp, 12);
-    display_show(disp);
-
-    if (sound_on)
-        playSound(2);
-
-    menu_deviceinfo(disp);
-}
-
 void loadFile(display_context_t disp)
 {
     char name_file[256];
@@ -3276,7 +3280,7 @@ void loadFile(display_context_t disp)
     sprintf(extension, "%s", (pch + 1)); //0123456
 
 
-    if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64") || !strcmp(extension, "BIN")) //TODO: an enum would be better
+    if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64")) //TODO: an enum would be better
         ft = 1;
     else if (!strcmp(extension, "MPK"))
         ft = 2;
@@ -3290,6 +3294,7 @@ void loadFile(display_context_t disp)
         ft = 6;
     else if (!strcmp(extension, "MP3"))
         ft = 7;
+
 
     if (ft != 7 || ft != 2)
     {
@@ -3407,6 +3412,8 @@ void loadFile(display_context_t disp)
 
 void handleInput(display_context_t disp, sprite_t *contr)
 {
+    //request controller
+    //request controller 1 [0]
     controller_scan();
     struct controller_data keys = get_keys_down();
     struct controller_data keys_held = get_keys_held();
@@ -4078,7 +4085,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
                 sprintf(extension, "%s", (pch + 1)); //0123456
 
-                if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64") || !strcmp(extension, "BIN"))
+                if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64"))
                 { //rom
                     //cfg rom
                     sprintf(rom_filename, "%s", list[cursor].filename);
@@ -4195,7 +4202,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
                 pch = strrchr(_upper_name_file, '.');
                 sprintf(extension, "%s", (pch + 1));
 
-                if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64") || !strcmp(extension, "BIN"))
+                if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64"))
                 { //rom
                     //load rom
                     while (!(disp = display_lock()))
@@ -4262,13 +4269,13 @@ void handleInput(display_context_t disp, sprite_t *contr)
     {
         switch (input_mapping)
         {
-        case file_manager:
-            showAboutScreen(disp);
-            input_mapping = control_screen;
-            break;
+            case file_manager:
+                showAboutScreen(disp);
+                input_mapping = control_screen;
+                break;
 
             case mempak_menu:
-                        while (!(disp = display_lock()))
+                    while (!(disp = display_lock()))
                         ;
                         if (sound_on)
                           playSound(2);
@@ -4282,15 +4289,11 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
           case control_screen:
             showControlScreen(disp);
-            input_mapping = device_screen;
-            break;
-            
-          case device_screen:
-            showDeviceScreen(disp);
             input_mapping = none;
             break;
+            
 
-        default:
+            default:
             break;
         }
     }
@@ -4743,12 +4746,12 @@ int main(void)
             fnddb = "Found in db";
             done = "         done";
             romloaded = "Rom loaded";
-            loadgb = " Loading please wait";
+            loadgb = "    Game Loading...";
             loading = "      Loading...";
             plgmp3 = "    Playing MP3";
             savemem = "    Save: Off/Mempak";
             save32 = "    Save: Sram 32";
-            save128 = "    Save: Sram 128";
+            save128 = "    Save: Sram 96";
             save4k = "    Save: Eeprom 4k";
             save16k = "    Save: Eeprom 16k";
             saveflash = "    Save: Flashram";

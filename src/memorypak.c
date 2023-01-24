@@ -7,15 +7,16 @@
 #include <libdragon.h>
 #include <string.h>
 #include <stdio.h>
-#include "constants.h"
 #include "types.h"
 #include "mempak.h"
 #include "memorypak.h"
+#include "constants.h"
 #include "ff.h"
 #include "menu.h"
 #include "debug.h"
 #include "strlib.h"
 #include "sys.h"
+#include <stdlib.h>
 
 
 enum MemoryPakFormat
@@ -30,11 +31,11 @@ char *mempak_path;
 
 char ___TranslateNotes(char *bNote, char *Text)
 {
-#pragma warning(disable : 4305 4309)
+//#pragma warning(disable : 4305 4309)
     char cReturn = 0x00;
     const char aSpecial[] = {0x21, 0x22, 0x23, 0x60, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x3A, 0x3D, 0x3F, 0x40, 0x74, 0xA9, 0xAE};
                         //  { '!' , '\"', '#' , '`' , '*' , '+' , ',' , '-' , '.' , '/' , ':' , '=' , '?' , '>' , 'tm', '(r)','(c)' };
-#pragma warning(default : 4305 4309)
+//#pragma warning(default : 4305 4309)
     int i = 16;
     do
     {
@@ -188,8 +189,8 @@ void view_mpk_file(display_context_t disp, char *mpk_filename)
             32768,         /* [IN] Number of bytes to read */
             &bytesread    /* [OUT] Number of bytes read */
         );
-
-
+        
+          
         f_close(&file);
 
         printText("File contents:", 11, 5, disp);
@@ -197,7 +198,7 @@ void view_mpk_file(display_context_t disp, char *mpk_filename)
 
         int notes_c = 0;
 
-        char szBuffer[40],
+        char szBuffer[58],
             cAppendix;
         int bFirstChar;
 
@@ -226,7 +227,14 @@ void view_mpk_file(display_context_t disp, char *mpk_filename)
                         cAppendix = ___TranslateNotes(&mempak_data[0x300 + (notes_c * 32)], szBuffer);
 
                         if (cAppendix != '\0')
-                            sprintf(szBuffer, "%s. %c", szBuffer, cAppendix);
+                        {
+                            char *buf = szBuffer;
+
+                            int strLength = snprintf(0, 0, "%s. %c", buf, cAppendix);
+                            //assert(strLength >= 0); // TODO add proper error handling
+                            //szBuffer = malloc(sizeof(char) * (strLength + 1));
+                            snprintf(szBuffer, strLength+1, "%s. %c", buf, cAppendix);
+                        }
 
                         bFirstChar = 1;
                         for (i = 0; i < (int)strlen(szBuffer); i++)
@@ -306,7 +314,7 @@ void view_mpk_file(display_context_t disp, char *mpk_filename)
         else
         {
             printText("empty", 11, -1, disp);
-        }
+        }    
     }
 }
 
@@ -316,20 +324,19 @@ void view_mpk(display_context_t disp)
 
     printText("Mempak content:", 11, 5, disp);
     struct controller_data output;
-    get_accessories_present( &output);
+    get_accessories_present( &output );
 
     /* Make sure they don't have a rumble pak inserted instead */
-    switch (identify_accessory(0))
+    switch (identify_accessory(0)) //controller 1
     {
     case ACCESSORY_NONE:
 
         printText(" ", 11, -1, disp);
-        printText("no Mempak", 11, -1, disp);
+        printText("No Mempak", 11, -1, disp);
         break;
 
     case ACCESSORY_MEMPAK:
-        err = validate_mempak(0);
-        if (err)
+        if ((err = validate_mempak(0)))
         {
             if (err == -3)
             {
@@ -386,10 +393,9 @@ void mpk_to_file(display_context_t disp, char *mpk_filename, int quick)
 {
     u8 buff[MAX_SUPPORTED_PATH_LEN];
     u8 v = 0;
-    u8 ok = 0;
 
     if (quick)
-        sprintf(buff, "/"ED64_FIRMWARE_PATH"/%s/%s", mempak_path, mpk_filename);
+        sprintf(buff,"/"ED64_FIRMWARE_PATH"/%s/%s", mempak_path, mpk_filename);
     else
         sprintf(buff, "/"ED64_FIRMWARE_PATH"/%s/%s.MPK", mempak_path, mpk_filename);
 
@@ -422,7 +428,7 @@ void mpk_to_file(display_context_t disp, char *mpk_filename, int quick)
     if (result == FR_OK)
     {
         controller_init();
-
+        
         int err = 0;
         for (int j = 0; j < 128; j++)
         {
@@ -440,9 +446,9 @@ void mpk_to_file(display_context_t disp, char *mpk_filename, int quick)
 
         f_close(&file);
 
-
+        
         sprintf(buff, "File: %s%i.MPK", mpk_filename, v);
-
+    
         printText(buff, 9, -1, disp);
         printText("backup done...", 9, -1, disp);
     }
