@@ -22,7 +22,6 @@
 #define SAVE_TYPE_EEP4k 3
 #define SAVE_TYPE_EEP16k 4
 #define SAVE_TYPE_FLASH 5
-
 #define DMA_BUFF_ADDR (ROM_LEN - 0x100000)
 
 #define REG_CFG 0
