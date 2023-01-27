@@ -80,6 +80,7 @@ typedef struct
     char filename[MAX_FILENAME_LEN + 1];
 } direntry_t;
 
+
 //ini file
 typedef struct
 {
@@ -241,7 +242,7 @@ u8 ext_type = 0;         //0=classic 1=org os
 u8 sd_speed = 1;         // 1=25Mhz 2=50Mhz
 u8 hide_sysfolder = 0;
 u8 save_backup = 1;
-u8 show_splash = 1;
+u8 show_splash = 0;
 u8 language = 0;
 char *background_image;
 char *splash_image;
@@ -276,6 +277,21 @@ char *save4k;
 char *save16k;
 char *saveflash;
 char *OpComsucc;
+char *mpksub;
+char *viewcont;
+char *backnew;
+char *formatt;
+char *abortmen;
+char *restoreback;
+char *confreq;
+char *aresure;
+char *cupcont;
+char *cancelmenu;
+char *mpkrest;
+char *mpkform;
+char *mpkback;
+char *searchmem;
+char *qbackup;
 
 int filesize(FILE *pFile)
 {
@@ -2525,14 +2541,14 @@ void drawConfirmBox(display_context_t disp)
         playSound(3);
 
     printText(" ", 9, 9, disp);
-    printText("Confirmation required:", 9, -1, disp);
+    printText(confreq, 9, -1, disp);
     printText(" ", 9, -1, disp);
     printText(" ", 9, -1, disp);
-    printText("    Are you sure?", 9, -1, disp);
+    printText(aresure, 9, -1, disp);
     printText(" ", 9, -1, disp);
-    printText("    C-UP Continue ", 9, -1, disp); //set mapping 3
+    printText(cupcont, 9, -1, disp); //set mapping 3
     printText(" ", 9, -1, disp);
-    printText("      B Cancel", 9, -1, disp);
+    printText(cancelmenu, 9, -1, disp);
 
     sleep(300);
 }
@@ -3358,7 +3374,7 @@ void loadFile(display_context_t disp)
         clearScreen(disp); //part clear?
         display_dir(list, cursor, page, MAX_LIST, count, disp);
         display_show(disp);
-        drawShortInfoBox(disp, " L=Restore  R=Backup", 2);
+        drawShortInfoBox(disp, restoreback, 2);
         input_mapping = mpk_choice;
         sprintf(rom_filename, "%s", name_file);
         break;
@@ -3752,9 +3768,9 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
                 display_show(disp);
 
-                printText("Mempak-Backup:", 9, 9, disp);
+                printText(mpkback, 9, 9, disp);
                 printText(" ", 9, -1, disp);
-                printText("search...", 9, -1, disp);
+                printText(searchmem, 9, -1, disp);
                 mpk_to_file(disp, input_text, 0);
                 while (!(disp = display_lock()))
                 ;
@@ -3805,16 +3821,16 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
             display_show(disp);
 
-            printText("Mempak-Subsystem:", 9, 9, disp);
+            printText(mpksub, 9, 9, disp);
             printText(" ", 9, -1, disp);
             printText(" ", 9, -1, disp);
-            printText("  Z: View content", 9, -1, disp);
+            printText(viewcont, 9, -1, disp);
             printText(" ", 9, -1, disp);
-            printText("  A: Backup - new", 9, -1, disp); //set mapping 3
+            printText(backnew, 9, -1, disp); //set mapping 3
             printText(" ", 9, -1, disp);
-            printText("  R: Format", 9, -1, disp);
+            printText(formatt, 9, -1, disp);
             printText(" ", 9, -1, disp);
-            printText("  B: Abort", 9, -1, disp);
+            printText(abortmen, 9, -1, disp);
             break;
 
         case mempak_menu:
@@ -3954,7 +3970,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
             drawBoxNumber(disp, 2);
             display_show(disp);
 
-            printText("Mempak-Format:", 9, 9, disp);
+            printText(mpkform, 9, 9, disp);
             printText(" ", 9, -1, disp);
 
             printText("formating...", 9, -1, disp);
@@ -4004,7 +4020,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
             drawBoxNumber(disp, 2);
             display_show(disp);
 
-            printText("Mempak-Restore:", 9, 9, disp);
+            printText(mpkrest, 9, 9, disp);
             printText(" ", 9, -1, disp);
 
             file_to_mpk(disp, rom_filename);
@@ -4031,9 +4047,9 @@ void handleInput(display_context_t disp, sprite_t *contr)
             drawBoxNumber(disp, 2);
             display_show(disp);
 
-            printText("Quick-Backup:", 9, 9, disp);
+            printText(qbackup, 9, 9, disp);
             printText(" ", 9, -1, disp);
-            printText("search...", 9, -1, disp);
+            printText(searchmem, 9, -1, disp);
 
             mpk_to_file(disp, list[cursor].filename, 1); //quick
             while (!(disp = display_lock()))
@@ -4581,6 +4597,17 @@ void handleInput(display_context_t disp, sprite_t *contr)
             break;
 
         case mempak_menu:
+            while (!(disp = display_lock()))
+                ;
+
+            graphics_set_color(graphics_make_color(0xFF, 0xFF, 0xFF, 0xFF), graphics_make_color(0x00, 0x00, 0x00, 0x00));
+            new_scroll_pos(&cursor, &page, MAX_LIST, count);
+            clearScreen(disp);
+            display_show(disp);
+
+            display_dir(list, cursor, page, MAX_LIST, count, disp);
+            input_mapping = file_manager;
+            display_show(disp);
             break;
         case delete_prompt:
 
@@ -4742,20 +4769,79 @@ int main(void)
                 break;
         }
 
-            dirempty = "Dir empty...";
-            fnddb = "Found in db";
-            done = "         done";
-            romloaded = "Rom loaded";
-            loadgb = "    Game Loading...";
-            loading = "      Loading...";
-            plgmp3 = "    Playing MP3";
-            savemem = "    Save: Off/Mempak";
-            save32 = "    Save: Sram 32";
-            save128 = "    Save: Sram 96";
-            save4k = "    Save: Eeprom 4k";
-            save16k = "    Save: Eeprom 16k";
-            saveflash = "    Save: Flashram";
-            OpComsucc = "Operation completed succesfully...";
+        switch(language)
+        {
+            //EN
+            case 0:
+            //menu
+                dirempty = "Dir empty...";
+                fnddb = "Found in db";
+                done = "         Done";
+                romloaded = "Rom loaded";
+                loadgb = "    Game Loading...";
+                loading = "      Loading...";
+                plgmp3 = "    Playing MP3";
+            //conf save
+                savemem = "    Save: Off/Mempak";
+                save32 = "    Save: Sram 32";
+                save128 = "    Save: Sram 96";
+                save4k = "    Save: Eeprom 4k";
+                save16k = "    Save: Eeprom 16k";
+                saveflash = "    Save: Flashram";
+                OpComsucc = "Operation completed succesfully...";
+            //mempak
+                mpksub = "Mempak-Subsystem:";
+                viewcont = "  Z: View content";
+                backnew = "  A: Backup - new";
+                formatt = "  R: Format";
+                abortmen = "  B: Abort";
+                restoreback = " L=Restore  R=Backup";
+                confreq = "Confirmation required:";
+                aresure = "    Are you sure?";
+                cupcont = "    C-UP Continue ";
+                cancelmenu = "      B Cancel";
+                mpkrest = "Mempak-Restore:";
+                mpkform = "Mempak-Format:";
+                mpkback = "Mempak-Backup:";
+                searchmem = "Searching...";
+                qbackup = "Quick-Backup:";
+            break;
+        //ES
+            case 1:
+            //menu
+                dirempty = "Directorio vacio...";
+                fnddb = "Encontrado en db";
+                done = "        Hecho";
+                romloaded = "Rom cargada";
+                loadgb = "   Cargando juego...";
+                loading = "     Cargando...";
+                plgmp3 = "  Reproduciendo MP3";
+            //conf save
+                savemem = "Guardado: Off/Mempak";
+                save32 = "Guardado: Sram 32";
+                save128 = "Guardado: Sram 96";
+                save4k = "Guardado: Eeprom 4k";
+                save16k = "Guardado: Eeprom 16k";
+                saveflash = "Guardado: Flashram";
+                OpComsucc = "Operacion completada exitosamente...";
+            //mempak
+                mpksub = "Subsistema Mempak:";
+                viewcont = "  Z: Ver contenido";
+                backnew = "  A: Copiar contenido";
+                formatt = "  R: Formatear";
+                abortmen = "  B: Abortar";
+                restoreback = "L=Restaurar  R=Copiar";
+                confreq = "Confirmacion requirida:";
+                aresure = "    Seguro?";
+                cupcont = "    C-UP Continuar ";
+                cancelmenu = "      B Cancelar";
+                mpkrest = "Restaurar Mempak:";
+                mpkform = "Formatear Mempak:";
+                mpkback = "Copiar Mempak:";
+                searchmem = "Buscando...";
+                qbackup = "Copiado rapido:";
+            break;
+        }
 
         init_interrupts();
 
@@ -4900,7 +4986,7 @@ int main(void)
                 graphics_draw_text(disp, 94, 93, "3");  //d
                 graphics_draw_text(disp, 82, 82, "4");  //l
 
-                graphics_draw_text(disp, 208, 206, "press START");
+                graphics_draw_text(disp, 208, 206, "PRESS START");
 
                 if (set == 1)
                     drawSet1(disp);
