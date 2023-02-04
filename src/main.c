@@ -87,7 +87,6 @@ typedef struct
     int version;
     const char *name;
     char *background_image;
-    char *splash_image;
     char *border_color_1;
     char *border_color_2;
     char *box_color;
@@ -110,7 +109,6 @@ typedef struct
     int hide_sysfolder;
     int sd_speed;
     int save_backup;
-    int show_splash;
     int language;
 
 } configuration;
@@ -242,10 +240,8 @@ u8 ext_type = 0;         //0=classic 1=org os
 u8 sd_speed = 1;         // 1=25Mhz 2=50Mhz
 u8 hide_sysfolder = 0;
 u8 save_backup = 1;
-u8 show_splash = 0;
 u8 language = 0;
 char *background_image;
-char *splash_image;
 
 //mp3
 int buf_size;
@@ -287,11 +283,6 @@ char *confreq;
 char *aresure;
 char *cupcont;
 char *cancelmenu;
-char *mpkrest;
-char *mpkform;
-char *mpkback;
-char *searchmem;
-char *qbackup;
 
 int filesize(FILE *pFile)
 {
@@ -866,14 +857,6 @@ static int configHandler(void *user, const char *section, const char *name, cons
     {
         pconfig->save_backup = atoi(value);
     }
-    else if(MATCH("ed64", "show_splash"))
-    {
-        pconfig->show_splash = atoi(value);
-    }
-    else if (MATCH("ed64", "splash_image"))
-    {
-        pconfig->splash_image = strdup(value);
-    }
     else if (MATCH("ed64", "language"))
     {
         pconfig->language = atoi(value);
@@ -1155,7 +1138,7 @@ sprite_t *loadPng(u8 *png_filename)
 
 void loadgbrom(display_context_t disp, TCHAR *rom_path)
 {
-    drawShortInfoBox(disp, loadgb, 0);
+    drawShortInfoBox(disp, " loading please wait", 0);
     FRESULT result;
     FIL emufile;
     UINT emubytesread;
@@ -1195,17 +1178,13 @@ void loadgbrom(display_context_t disp, TCHAR *rom_path)
             f_close(&romfile);
 
             boot_cic = CIC_6102;
-            boot_save = 5; //flash
+            boot_save = 2; //flash
             force_tv = 0;  //no force
             cheats_on = 0; //cheats off
             checksum_fix_on = 0;
 
             bootRom(disp, 1);
         }
-    }
-    else
-    {
-        drawShortInfoBox(disp, "  Emulator not found", 1);
     }
 }
 
@@ -1977,10 +1956,8 @@ int readConfigFile(void)
             text_offset = config.text_offset;
             hide_sysfolder = config.hide_sysfolder;
             sd_speed = config.sd_speed;
-            save_backup = config.save_backup;
-            show_splash = config.show_splash;
             background_image = config.background_image;
-            splash_image= config.splash_image;
+            save_backup = config.save_backup;
             language = config.language;
 
             return 1;
@@ -3768,9 +3745,9 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
                 display_show(disp);
 
-                printText(mpkback, 9, 9, disp);
+                printText("Mempak-Backup:", 9, 9, disp);
                 printText(" ", 9, -1, disp);
-                printText(searchmem, 9, -1, disp);
+                printText("search...", 9, -1, disp);
                 mpk_to_file(disp, input_text, 0);
                 while (!(disp = display_lock()))
                 ;
@@ -3970,7 +3947,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
             drawBoxNumber(disp, 2);
             display_show(disp);
 
-            printText(mpkform, 9, 9, disp);
+            printText("Mempak-Format:", 9, 9, disp);
             printText(" ", 9, -1, disp);
 
             printText("formating...", 9, -1, disp);
@@ -4020,7 +3997,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
             drawBoxNumber(disp, 2);
             display_show(disp);
 
-            printText(mpkrest, 9, 9, disp);
+            printText("Mempak-Restore:", 9, 9, disp);
             printText(" ", 9, -1, disp);
 
             file_to_mpk(disp, rom_filename);
@@ -4047,9 +4024,9 @@ void handleInput(display_context_t disp, sprite_t *contr)
             drawBoxNumber(disp, 2);
             display_show(disp);
 
-            printText(qbackup, 9, 9, disp);
+            printText("Quick-Backup:", 9, 9, disp);
             printText(" ", 9, -1, disp);
-            printText(searchmem, 9, -1, disp);
+            printText("search...", 9, -1, disp);
 
             mpk_to_file(disp, list[cursor].filename, 1); //quick
             while (!(disp = display_lock()))
@@ -4720,9 +4697,6 @@ int main(void)
         int sj = evd_readReg(REG_CFG); // not sure if this is needed!
         int save_job = evd_readReg(REG_SAV_CFG); //TODO: or the firmware is V3
 
-        if (save_job != 0 && show_splash != 1)
-            fast_boot = 1;
-
         //not gamepads more or less the n64 hardware-controllers
         controller_init();
 
@@ -4771,9 +4745,7 @@ int main(void)
 
         switch(language)
         {
-            //EN
             case 0:
-            //menu
                 dirempty = "Dir empty...";
                 fnddb = "Found in db";
                 done = "         Done";
@@ -4781,7 +4753,6 @@ int main(void)
                 loadgb = "    Game Loading...";
                 loading = "      Loading...";
                 plgmp3 = "    Playing MP3";
-            //conf save
                 savemem = "    Save: Off/Mempak";
                 save32 = "    Save: Sram 32";
                 save128 = "    Save: Sram 96";
@@ -4789,7 +4760,6 @@ int main(void)
                 save16k = "    Save: Eeprom 16k";
                 saveflash = "    Save: Flashram";
                 OpComsucc = "Operation completed succesfully...";
-            //mempak
                 mpksub = "Mempak-Subsystem:";
                 viewcont = "  Z: View content";
                 backnew = "  A: Backup - new";
@@ -4800,15 +4770,9 @@ int main(void)
                 aresure = "    Are you sure?";
                 cupcont = "    C-UP Continue ";
                 cancelmenu = "      B Cancel";
-                mpkrest = "Mempak-Restore:";
-                mpkform = "Mempak-Format:";
-                mpkback = "Mempak-Backup:";
-                searchmem = "Searching...";
-                qbackup = "Quick-Backup:";
             break;
-        //ES
+
             case 1:
-            //menu
                 dirempty = "Directorio vacio...";
                 fnddb = "Encontrado en db";
                 done = "        Hecho";
@@ -4816,7 +4780,6 @@ int main(void)
                 loadgb = "   Cargando juego...";
                 loading = "     Cargando...";
                 plgmp3 = "  Reproduciendo MP3";
-            //conf save
                 savemem = "Guardado: Off/Mempak";
                 save32 = "Guardado: Sram 32";
                 save128 = "Guardado: Sram 96";
@@ -4824,7 +4787,6 @@ int main(void)
                 save16k = "Guardado: Eeprom 16k";
                 saveflash = "Guardado: Flashram";
                 OpComsucc = "Operacion completada exitosamente...";
-            //mempak
                 mpksub = "Subsistema Mempak:";
                 viewcont = "  Z: Ver contenido";
                 backnew = "  A: Copiar contenido";
@@ -4832,14 +4794,9 @@ int main(void)
                 abortmen = "  B: Abortar";
                 restoreback = "L=Restaurar  R=Copiar";
                 confreq = "Confirmacion requirida:";
-                aresure = "    Seguro?";
+                aresure = "     Seguro?";
                 cupcont = "    C-UP Continuar ";
                 cancelmenu = "      B Cancelar";
-                mpkrest = "Restaurar Mempak:";
-                mpkform = "Formatear Mempak:";
-                mpkback = "Copiar Mempak:";
-                searchmem = "Buscando...";
-                qbackup = "Copiado rapido:";
             break;
         }
 
@@ -4863,27 +4820,8 @@ int main(void)
         //Grab a render buffer
         while (!(disp = display_lock()))
             ;
-
+        
         //backgrounds from ramfs/libdragonfs
-        char splash_path[64];
-        sprintf(splash_path, "/"ED64_FIRMWARE_PATH"/wallpaper/%s", splash_image);
-
-        if (!fast_boot)
-        {
-            splashscreen = loadPng(splash_path);
-            graphics_draw_sprite(disp, 0, 0, splashscreen); //start-picture
-            display_show(disp);
-
-            if (sound_on)
-            {
-                playSound(5);
-                for (int s = 0; s < 350; s++) //todo: this blocks for 2 seconds (splashscreen)! is there a better way before the main loop starts!
-                {
-                    sndUpdate();
-                    sleep(10);
-                }
-            }
-        }
 
         char background_path[64];
         sprintf(background_path, "/"ED64_FIRMWARE_PATH"/wallpaper/%s", background_image);
