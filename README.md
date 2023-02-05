@@ -38,11 +38,11 @@ Based on [a fork of alt64](https://github.com/parasyte/alt64) which was original
 
 ```sh
 # Run in project root to build project:
-docker run --rm -v "$(pwd):/build" ghcr.io/bakapear/altra64:master make
+sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make
 # Output: bin/OS64P.v64
 
 # Run in project root to clean project from build objects:
-docker run --rm -v "$(pwd):/build" ghcr.io/bakapear/altra64:master make clean
+sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make clean
 ```
 
 ### Big thanks to the countless people who make Altra64 possible!!! Enjoy!
