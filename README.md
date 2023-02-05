@@ -39,7 +39,11 @@ L+R delete files
 
 Install docker using the following command:
 ```
-sudo apt-get install docker.io
+sudo apt-get install containerd
+```
+and
+```
+ sudo apt-get install docker.io
 ```
 and execute:
 
