@@ -1,77 +1,48 @@
+# Altra64
+[![Build and release](https://github.com/bakapear/altra64/actions/workflows/build-release.yml/badge.svg)](https://github.com/bakapear/altra64/actions/workflows/build-release.yml)
+[![Build docker dev build image](https://github.com/bakapear/altra64/actions/workflows/docker-image.yml/badge.svg)](https://github.com/bakapear/altra64/actions/workflows/docker-image.yml)
+
 Alternative Everdrive64 menu
 
-`Altra64` is an open source menu for [Everdrive64](http://krikzz.com/) and ed64+ and is based on a fork of alt64 which was
-originally written by saturnu, and released on the
-[Everdrive64 forum](http://krikzz.com/forum/index.php?topic=816.0).
+`Altra64` is an open source menu for [Everdrive64](http://krikzz.com/) and ED64+<br>
+Based on [a fork of alt64](https://github.com/parasyte/alt64) which was originally written by saturnu, and released on the [Everdrive64 forum](http://krikzz.com/forum/index.php?topic=816.0).
+
 ## Setup
-
-1, Format your SD card to fat32.
-
-2, Extract ED64P.zip into the rout of your sd card.
-
-3, Change ALT64.ini To your hearts content.
-
-4, Add leagally obtained ROMs
-
-5, Insert the SD card into the ED64plus and enjoy
+1. Format your SD card to FAT32.
+2. Extract the contents of ALTRA64.zip into the root of your SD card.
+3. Change ALT64.ini to your hearts content.
+4. Add legally obtained ROMs.
+5. Insert the SD card into the ED64plus and enjoy!
 
 ## Controls
-
 ```
-Key settings
-L brings up the mempak menu
-      B abort
-      A backup
-      R format
-      Z view controller pak
-Z about screen
-A start rom/directory/mempak
-B back/cancel
-START start last rom
-C-left rom info / mempak content view
-C-right rom config  screen
-C-up view full filename
-C-down Toplist 15
-L+R delete files
+[L] - Opens MEMPAK menu
+      [B] - Abort
+      [A] - Backup
+      [R] - Format
+      [Z] - View Controller Pak
+[Z] - About Screen
+[A] - Start ROM / Open Directory / View MEMPAK
+[B] - Back / Cancel
+[START] - Start Last ROM
+[C-Left] - ROM Info / MEMPAK Content View
+[C-Right] - ROM Config Screen
+[C-Up] - View Full Filename
+[C-Down] - TOP 15 List
+[L+R] - Delete File
 ```
 
 ## Building
+[Automated Builds Here](https://github.com/bakapear/altra64/actions)<br>
+[Docker Image](https://github.com/bakapear/altra64/pkgs/container/altra64)
 
-Install docker using the following command:
-```
-sudo apt-get install containerd
-```
-and
-```
- sudo apt-get install docker.io
-```
-and execute:
+```sh
+# Run in project root to build project:
+docker run --rm -v "$(pwd):/build" ghcr.io/bakapear/altra64:master make
+# Output: bin/OS64P.v64
 
-```
-sudo dockerd
+# Run in project root to clean project from build objects:
+docker run --rm -v "$(pwd):/build" ghcr.io/bakapear/altra64:master make clean
 ```
 
-### Build `Altra64`
-
-To build the R.O.M.
-
-run the build.sh script
-
-or this command:
-```
-sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make
-```
-
-If it all worked, you will find `OS64P.v64` in the `bin` directory.
-
-### Clean `Altra64`
-
-Finally, we can clean the build objects from the project
-
-from the projects root directory
-
-```
-sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make clean
-```
-
-### Big thanks to the countless people who make altra64 possible!!! Enjoy!
+### Big thanks to the countless people who make Altra64 possible!!! Enjoy!
