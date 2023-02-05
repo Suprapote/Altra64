@@ -1,7 +1,3 @@
-# Altra64
-
-[![Build and release](https://github.com/ariahiro64/altra64/actions/workflows/build-release.yml/badge.svg)](https://github.com/ariahiro64/altra64/actions/workflows/build-release.yml)[![Build docker dev build image](https://github.com/ariahiro64/altra64/actions/workflows/docker-image.yml/badge.svg)](https://github.com/ariahiro64/altra64/actions/workflows/docker-image.yml)
-
 Alternative Everdrive64 menu
 
 `Altra64` is an open source menu for [Everdrive64](http://krikzz.com/) and ed64+ and is based on a fork of alt64 which was
@@ -41,20 +37,25 @@ L+R delete files
 
 ## Building
 
-If you want to build the menu, you need an n64 toolchain. This is terrible to build, moparisthebest ended up creating a Dockerfile in the docker folder, instructions included in it.
+Install docker using the following command:
+```
+sudo apt-get install docker.io
+```
+and execute:
 
-Or if you him and I, you can use the one I built and pushed to ghcr.io, which can be found [here](https://github.com/ariahiro64/altra64/pkgs/container/altra64)
-
-Furthermore adrianopteodoro Automated the build proccess. Builds can be found [here](https://github.com/ariahiro64/altra64/actions)
+```
+sudo dockerd
+```
 
 ### Build `Altra64`
 
 To build the R.O.M.
 
-from the projects root directory, with docker installed
+run the build.sh script
 
+or this command:
 ```
-docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make
+sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make
 ```
 
 If it all worked, you will find `OS64P.v64` in the `bin` directory.
@@ -66,7 +67,7 @@ Finally, we can clean the build objects from the project
 from the projects root directory
 
 ```
-docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make clean
+sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make clean
 ```
 
 ### Big thanks to the countless people who make altra64 possible!!! Enjoy!
