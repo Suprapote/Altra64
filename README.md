@@ -1,6 +1,6 @@
 # Altra64
-[![Build and release](https://github.com/ariahiro64/altra64/actions/workflows/build-release.yml/badge.svg)](https://github.com/bakapear/altra64/actions/workflows/build-release.yml)
-[![Build docker dev build image](https://github.com/bakapear/altra64/actions/workflows/docker-image.yml/badge.svg)](https://github.com/bakapear/altra64/actions/workflows/docker-image.yml)
+[![Build and release](https://github.com/ariahiro64/altra64/actions/workflows/build-release.yml/badge.svg)](https://github.com/ariahiro64/altra64/actions/workflows/build-release.yml)
+[![Build docker dev build image](https://github.com/ariahiro64/altra64/actions/workflows/docker-image.yml/badge.svg)](https://github.com/ariahiro64/altra64/actions/workflows/docker-image.yml)
 
 Alternative Everdrive64 menu
 
