@@ -50,6 +50,8 @@
 #include "menu.h"
 #include "cic.h"
 
+#include "localevar.h"
+
 #ifdef USE_TRUETYPE
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
@@ -110,6 +112,7 @@ typedef struct
     int sd_speed;
     int save_backup;
     int language;
+    int show_extension;
 
 } configuration;
 
@@ -242,6 +245,7 @@ u8 hide_sysfolder = 0;
 u8 save_backup = 1;
 u8 language = 0;
 char *background_image;
+u8 show_extension = 0;
 
 //mp3
 int buf_size;
@@ -258,31 +262,6 @@ int page = 0;
 int cursor = 0;
 direntry_t *list;
 
-//language
-char *dirempty;
-char *fnddb;
-char *done;
-char *romloaded;
-char *loadgb;
-char *loading;
-char *plgmp3;
-char *savemem;
-char *save32;
-char *save128;
-char *save4k;
-char *save16k;
-char *saveflash;
-char *OpComsucc;
-char *mpksub;
-char *viewcont;
-char *backnew;
-char *formatt;
-char *abortmen;
-char *restoreback;
-char *confreq;
-char *aresure;
-char *cupcont;
-char *cancelmenu;
 
 int filesize(FILE *pFile)
 {
@@ -521,7 +500,7 @@ void display_dir(direntry_t *list, int cursor, int page, int max, int count, dis
     if (max == 0)
     {
         printText(dirempty, 3, 6, disp);
-        sprintf(sel_str, "dir empty...");
+        sprintf(sel_str, "  ");
         empty = 1;
     }
     else
@@ -861,6 +840,10 @@ static int configHandler(void *user, const char *section, const char *name, cons
     {
         pconfig->language = atoi(value);
     }
+    else if (MATCH("ed64", "show_extension"))
+    {
+        pconfig->show_extension = atoi(value);
+    }
     else if (MATCH("user", "name"))
     {
         pconfig->name = strdup(value);
@@ -1138,7 +1121,7 @@ sprite_t *loadPng(u8 *png_filename)
 
 void loadgbrom(display_context_t disp, TCHAR *rom_path)
 {
-    drawShortInfoBox(disp, " loading please wait", 0);
+    drawShortInfoBox(disp, loadgb, 0);
     FRESULT result;
     FIL emufile;
     UINT emubytesread;
@@ -1219,12 +1202,9 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
             FIL file;
             UINT bytesread;
             result = f_open(&file, "/"ED64_FIRMWARE_PATH"/UltraSMS.z64", FA_READ);
-
             if (result == FR_OK)
             {
                 int fsize = f_size(&file);
-
-
                 result =
                 f_read (
                     &file,        /* [IN] File object */
@@ -1232,10 +1212,7 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
                     fsize,        /* [IN] Number of bytes to read */
                     &bytesread    /* [OUT] Number of bytes read */
                 );
-
                 f_close(&file);
-
-
                 romresult =
                 f_read (
                     &romfile,           /* [IN] File object */
@@ -1243,10 +1220,7 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
                     romfsize,           /* [IN] Number of bytes to read */
                     &rombytesread       /* [OUT] Number of bytes read */
                 );
-
                 f_close(&romfile);
-
-
                 boot_cic = CIC_6102;
                 boot_save = 0; //save off/cpak
                 force_tv = 0;  //no force
@@ -1289,16 +1263,13 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
         {
             drawShortInfoBox(disp, loadgb, 0);
 
-            FRESULT result;
+           FRESULT result;
             FIL file;
             UINT bytesread;
             result = f_open(&file, "/"ED64_FIRMWARE_PATH"/ultraMSX2.z64", FA_READ);
-
             if (result == FR_OK)
             {
                 int fsize = f_size(&file);
-
-
                 result =
                 f_read (
                     &file,        /* [IN] File object */
@@ -1306,10 +1277,7 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
                     fsize,        /* [IN] Number of bytes to read */
                     &bytesread    /* [OUT] Number of bytes read */
                 );
-
                 f_close(&file);
-
-
                 romresult =
                 f_read (
                     &romfile,           /* [IN] File object */
@@ -1317,21 +1285,19 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
                     romfsize,           /* [IN] Number of bytes to read */
                     &rombytesread       /* [OUT] Number of bytes read */
                 );
-
                 f_close(&romfile);
-
-
                 boot_cic = CIC_6102;
                 boot_save = 0; //save off/cpak
                 force_tv = 0;  //no force
                 cheats_on = 0; //cheats off
                 checksum_fix_on = 0;
-
+                
                 checksum_sdram();
                 bootRom(disp, 1);
             }
         }
     }
+
     else
     {
         drawShortInfoBox(disp, "  Emulator not found", 1);
@@ -1595,7 +1561,7 @@ int backupSaveData(display_context_t disp)
 
     if (result == FR_OK)
     {
-        printText("updating last played game record...", 3, 4, disp);
+        printText(updatelastgamerecord, 3, 4, disp);
 
         int fsize = f_size(&file);
 
@@ -1665,7 +1631,7 @@ int backupSaveData(display_context_t disp)
     //reset with save request
     if (save_after_reboot)
     {
-        printText("Copying save RAM to SD card...", 3, -1, disp);
+        printText(cpyingram2SD, 3, -1, disp);
         if (saveTypeToSd(disp, rom_filename, save_format))
         {
             printText(OpComsucc, 3, -1, disp);
@@ -1728,33 +1694,33 @@ int saveTypeFromSd(display_context_t disp, char *rom_name, int stype)
         switch(result)
         {
         case FR_NOT_READY:
-        printText("not ready error", 11, -1, disp);
+        printText("ERROR: Not ready.", 11, -1, disp);
         break;
         case FR_NO_FILE:
-        printText("no file error", 11, -1, disp);
+        printText("ERROR: File doesn't exist.", 11, -1, disp);
         break;
         case FR_NO_PATH:
-        printText("no path error", 11, -1, disp);
+        printText("ERROR: Path doesn't exist.", 11, -1, disp);
         break;
         case FR_INVALID_NAME:
-        printText("invalid name error", 11, -1, disp);
+        printText("ERROR: Invalid name.", 11, -1, disp);
         break;
         case FR_DENIED:
-        printText("denied error", 11, -1, disp);
+        printText("ERROR: Operation denied.", 11, -1, disp);
         break;
         case FR_EXIST:
-        printText("exist error", 11, -1, disp);
+        printText("ERROR: File already exists.", 11, -1, disp);
         break;
         case FR_TIMEOUT:
-        printText("timeout error", 11, -1, disp);
+        printText("ERROR: Timeout.", 11, -1, disp);
         break;
         case FR_LOCKED:
-        printText("locked error", 11, -1, disp);
+        printText("ERROR: Device locked.", 11, -1, disp);
         break;
         default:
         break;
         }
-        printText("no save found", 3, -1, disp);
+        printText("No save found.", 3, -1, disp);
         //todo: clear memory area
 
         return 0;
@@ -1762,11 +1728,11 @@ int saveTypeFromSd(display_context_t disp, char *rom_name, int stype)
 
     if (pushSaveToCart(stype, cartsave_data))
     {
-        printText("transferred save data...", 3, -1, disp);
+        printText("Transferred save data...", 3, -1, disp);
     }
     else
     {
-        printText("error transfering save data", 3, -1, disp);
+        printText("Error transfering save data", 3, -1, disp);
     }
 
     return 1;
@@ -1870,7 +1836,7 @@ int saveTypeToSd(display_context_t disp, char *rom_name, int stype)
 
         TRACEF(disp, "cartsave_data=%p", &cartsave_data);
 
-        printText("Transfering save data...", 3, -1, disp);
+        printText(transfersavedat, 3, -1, disp);
         if (getSaveFromCart(stype, cartsave_data))
         {
             UINT bw;
@@ -1882,7 +1848,7 @@ int saveTypeToSd(display_context_t disp, char *rom_name, int stype)
             );
             f_close(&file);
 
-            printText("RAM area copied to SD card.", 3, -1, disp);
+            printText(ramarea2sd, 3, -1, disp);
             return 1;
         }
         else
@@ -1959,6 +1925,7 @@ int readConfigFile(void)
             background_image = config.background_image;
             save_backup = config.save_backup;
             language = config.language;
+            show_extension = config.show_extension;
 
             return 1;
         }
@@ -2361,7 +2328,7 @@ void bootRom(display_context_t disp, int silent)
         if (cheats_on)
         {
             gCheats = 1;
-            printText("try to load cheat-file...", 3, -1, disp);
+           drawShortInfoBox(disp," Trying to load cheat-file...", 0);
 
             char cheat_filename[64];
             sprintf(cheat_filename, "/"ED64_FIRMWARE_PATH"/CHEATS/%s.yml", rom_filename);
@@ -2369,13 +2336,25 @@ void bootRom(display_context_t disp, int silent)
             int ok = readCheatFile(cheat_filename, cheat_lists);
             if (ok == 0)
             {
-                printText("cheats found...", 3, -1, disp);
+                drawShortInfoBox(disp, "    Cheats found...", 0);
             }
             else
             {
-                printText("cheats not found", 3, -1, disp);
-                printText("or parsing failed", 3, -1, disp);
-                printText("reset console...", 3, -1, disp);
+                while (!(disp = display_lock()))
+                        ;
+                new_scroll_pos(&cursor, &page, MAX_LIST, count);
+                clearScreen(disp); //part clear?
+                display_dir(list, cursor, page, MAX_LIST, count, disp);
+                drawBoxNumber(disp, 5);
+                display_show(disp);
+
+                printText("  ", 9, -1, disp);
+                printText("  ", 9, -1, disp);
+                printText("  Cheats not found", 9, -1, disp);
+                printText("  or parsing failed", 9, -1, disp);
+                printText("  ", 9, -1, disp);
+                printText("  Reset console...", 9, -1, disp);
+
                 gCheats = 0;
                 while(true) {
                     sleep(20000);
@@ -2505,8 +2484,8 @@ void drawTextInput(display_context_t disp, char *msg)
     graphics_draw_text(disp, 40, 15, msg);
 }
 
-void drawConfirmBox(display_context_t disp)
-{    while (!(disp = display_lock()))
+void drawConfirmBox(display_context_t disp){
+    while (!(disp = display_lock()))
                 ;
     new_scroll_pos(&cursor, &page, MAX_LIST, count);
     clearScreen(disp); //part clear?
@@ -2969,7 +2948,7 @@ void drawRomConfigBox(display_context_t disp, int line)
     drawConfigSelection(disp, rom_config[0]);
 
     printText(" ", 9, 9, disp);
-    printText("Rom configuration:", 9, -1, disp);
+    printText(romconfig, 9, -1, disp);
     printText(" ", 9, -1, disp);
 
     switch (rom_config[1])
@@ -3026,7 +3005,7 @@ void drawRomConfigBox(display_context_t disp, int line)
     switch (rom_config[3])
     {
     case 0:
-        printText("      Tv: Force off", 9, -1, disp);
+        printText(tvforceoff, 9, -1, disp);
         break;
     case 1:
         printText("      Tv: NTSC", 9, -1, disp);
@@ -3044,10 +3023,10 @@ void drawRomConfigBox(display_context_t disp, int line)
     switch (rom_config[4])
     {
     case 0:
-        printText("   Cheat: off", 9, -1, disp);
+        printText(cheatoff, 9, -1, disp);
         break;
     case 1:
-        printText("   Cheat: on", 9, -1, disp);
+        printText(cheaton, 9, -1, disp);
         break;
     default:
         break;
@@ -3056,10 +3035,10 @@ void drawRomConfigBox(display_context_t disp, int line)
     switch (rom_config[5])
     {
     case 0:
-        printText("Checksum: disable fix", 9, -1, disp);
+        printText(checksumdisable, 9, -1, disp);
         break;
     case 1:
-        printText("Checksum: enable fix", 9, -1, disp);
+        printText(checksumenable, 9, -1, disp);
         break;
     default:
         break;
@@ -3068,22 +3047,22 @@ void drawRomConfigBox(display_context_t disp, int line)
     switch (rom_config[6])
     {
     case 0:
-        printText("  Rating: off", 9, -1, disp);
+        printText(ratoff, 9, -1, disp);
         break;
     case 1:
-        printText("  Rating: common", 9, -1, disp);
+        printText(ratcomo, 9, -1, disp);
         break;
     case 2:
-        printText("  Rating: uncommon", 9, -1, disp);
+        printText(ratuncomo, 9, -1, disp);
         break;
     case 3:
-        printText("  Rating: rare", 9, -1, disp);
+        printText(ratrare, 9, -1, disp);
         break;
     case 4:
-        printText("  Rating: epic", 9, -1, disp);
+        printText(ratepic, 9, -1, disp);
         break;
     case 5:
-        printText("  Rating: legendary", 9, -1, disp);
+        printText(ratlegend, 9, -1, disp);
         break;
 
     default:
@@ -3093,21 +3072,21 @@ void drawRomConfigBox(display_context_t disp, int line)
     switch (rom_config[7])
     {
     case 0:
-        printText(" Country: default", 9, -1, disp);
+        printText(countrydef, 9, -1, disp);
         break;
     case 1:
-        printText(" Country: NTSC", 9, -1, disp);
+        printText(countryntsc, 9, -1, disp);
         break;
     case 2:
-        printText(" Country: PAL", 9, -1, disp);
+        printText(countrypal, 9, -1, disp);
         break;
     default:
         break;
     }
 
     printText(" ", 9, -1, disp);
-    printText("B Cancel", 9, -1, disp);
-    printText("A Save config", 9, -1, disp);
+    printText(bcancel, 9, -1, disp);
+    printText(Asaveconf, 9, -1, disp);
 }
 
 //draws the charset for the textinputscreen
@@ -3269,7 +3248,6 @@ void loadFile(display_context_t disp)
     u8 extension[4];
     u8 *pch;
     pch = strrchr(_upper_name_file, '.'); //asd.n64
-
     sprintf(extension, "%s", (pch + 1)); //0123456
 
 
@@ -3747,7 +3725,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
                 printText("Mempak-Backup:", 9, 9, disp);
                 printText(" ", 9, -1, disp);
-                printText("search...", 9, -1, disp);
+                printText(searchfds, 9, -1, disp);
                 mpk_to_file(disp, input_text, 0);
                 while (!(disp = display_lock()))
                 ;
@@ -3800,8 +3778,6 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
             printText(mpksub, 9, 9, disp);
             printText(" ", 9, -1, disp);
-            printText(" ", 9, -1, disp);
-            printText(viewcont, 9, -1, disp);
             printText(" ", 9, -1, disp);
             printText(backnew, 9, -1, disp); //set mapping 3
             printText(" ", 9, -1, disp);
@@ -3947,10 +3923,10 @@ void handleInput(display_context_t disp, sprite_t *contr)
             drawBoxNumber(disp, 2);
             display_show(disp);
 
-            printText("Mempak-Format:", 9, 9, disp);
+            printText(mpkformat, 9, 9, disp);
             printText(" ", 9, -1, disp);
 
-            printText("formating...", 9, -1, disp);
+            printText(formating, 9, -1, disp);
 
             /* Make sure they don't have a rumble pak inserted instead */
             switch (identify_accessory(0))
@@ -3960,10 +3936,10 @@ void handleInput(display_context_t disp, sprite_t *contr)
                 break;
 
             case ACCESSORY_MEMPAK:
-                printText("Please wait...", 9, -1, disp);
+                printText(plswait, 9, -1, disp);
                 if (format_mempak(0))
                 {
-                    printText("Error formatting!", 9, -1, disp);
+                    printText(errorformating, 9, -1, disp);
                 }
                 else
                 {
@@ -3978,7 +3954,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
                 break;
 
             case ACCESSORY_RUMBLEPAK:
-                printText("Really, format a RumblePak?!", 9, -1, disp);
+                printText(reallyformatrpak, 9, -1, disp);
                 break;
             }
 
@@ -4026,7 +4002,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
             printText("Quick-Backup:", 9, 9, disp);
             printText(" ", 9, -1, disp);
-            printText("search...", 9, -1, disp);
+            printText(searchfds, 9, -1, disp);
 
             mpk_to_file(disp, list[cursor].filename, 1); //quick
             while (!(disp = display_lock()))
@@ -4075,7 +4051,6 @@ void handleInput(display_context_t disp, sprite_t *contr)
                 u8 extension[4];
                 u8 *pch;
                 pch = strrchr(_upper_name_file, '.'); //asd.n64
-
                 sprintf(extension, "%s", (pch + 1)); //0123456
 
                 if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64"))
@@ -4193,7 +4168,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
                 u8 extension[4];
                 u8 *pch;
                 pch = strrchr(_upper_name_file, '.');
-                sprintf(extension, "%s", (pch + 1));
+                sprintf(extension, "%s", (pch + 1)); //0123456
 
                 if (!strcmp(extension, "Z64") || !strcmp(extension, "V64") || !strcmp(extension, "N64"))
                 { //rom
@@ -4268,16 +4243,6 @@ void handleInput(display_context_t disp, sprite_t *contr)
                 break;
 
             case mempak_menu:
-                    while (!(disp = display_lock()))
-                        ;
-                        if (sound_on)
-                          playSound(2);
-
-                        drawBoxNumber(disp, 4);
-                        display_show(disp);
-                        view_mpk(disp);
-
-                        input_mapping = abort_screen;
             break;
 
           case control_screen:
@@ -4755,13 +4720,12 @@ int main(void)
                 plgmp3 = "    Playing MP3";
                 savemem = "    Save: Off/Mempak";
                 save32 = "    Save: Sram 32";
-                save128 = "    Save: Sram 96";
+                save128 = "    Save: Sram 128";
                 save4k = "    Save: Eeprom 4k";
                 save16k = "    Save: Eeprom 16k";
                 saveflash = "    Save: Flashram";
                 OpComsucc = "Operation completed succesfully...";
                 mpksub = "Mempak-Subsystem:";
-                viewcont = "  Z: View content";
                 backnew = "  A: Backup - new";
                 formatt = "  R: Format";
                 abortmen = "  B: Abort";
@@ -4770,6 +4734,39 @@ int main(void)
                 aresure = "    Are you sure?";
                 cupcont = "    C-UP Continue ";
                 cancelmenu = "      B Cancel";
+                romconfig = "Rom configuration:";
+                updatelastgamerecord = "Updating last played game record...";
+                ramarea2sd = "RAM area copied to SD card.";
+                cpyingram2SD = "Copying save RAM to SD card...";
+                transfersavedat = "Transfering save data...";
+                tvforceoff = "      Tv: Force Off";
+                cheatoff = "  Cheats: Off";
+                cheaton = "  Cheats: On";
+                checksumdisable = "Checksum: Disable fix";
+                checksumenable = "Checksum: Enable fix";
+                presstart = "PRESS START";
+                reallyformatrpak = "RumblePak inserted";
+                searchfds = "Searching...";
+                formating = "Formating...";
+                mpkformat = "Mempak-Format:";
+                plswait = "Please wait...";
+                errorformating = "Error formatting!";
+                ratoff = "  Rating: Off";
+                ratcomo = "  Rating: Common";
+                ratuncomo = "  Rating: Uncommon";
+                ratrare = "  Rating: Rare";
+                ratepic = "  Rating: Epic";
+                ratlegend = "  Rating: Legendary";
+                bcancel = "B: Cancel";
+                countrydef = " Country: default";
+                countryntsc = " Country: NTSC";
+                countrypal = " Country: PAL";
+                Asaveconf = "A: Save config";
+                directoriesNO = "Cannot delete directories!";
+                bexit = "B: Exit";
+                deletefile = "Delete this file?";
+                aconfirm = "A: Confirm";
+                znpage = "Z: Next page";
             break;
 
             case 1:
@@ -4782,21 +4779,53 @@ int main(void)
                 plgmp3 = "  Reproduciendo MP3";
                 savemem = "Guardado: Off/Mempak";
                 save32 = "Guardado: Sram 32";
-                save128 = "Guardado: Sram 96";
+                save128 = "Guardado: Sram 128";
                 save4k = "Guardado: Eeprom 4k";
                 save16k = "Guardado: Eeprom 16k";
                 saveflash = "Guardado: Flashram";
                 OpComsucc = "Operacion completada exitosamente...";
                 mpksub = "Subsistema Mempak:";
-                viewcont = "  Z: Ver contenido";
                 backnew = "  A: Copiar contenido";
                 formatt = "  R: Formatear";
                 abortmen = "  B: Abortar";
                 restoreback = "L=Restaurar  R=Copiar";
                 confreq = "Confirmacion requirida:";
                 aresure = "     Seguro?";
-                cupcont = "    C-UP Continuar ";
+                cupcont = "  C-ARRIBA Continuar ";
                 cancelmenu = "      B Cancelar";
+                romconfig = "Ajustes de la Rom:";
+                updatelastgamerecord = "Actualizando archivo de guardado...";
+                ramarea2sd = "Area de RAM copiada a la SD.";
+                cpyingram2SD = "Copiando RAM a la SD...";
+                transfersavedat = "Transfiriendo datos...";
+                tvforceoff = "      Tv: No forzar";
+                cheatoff = "  Trucos: Off";
+                cheaton = "  Trucos: On";
+                checksumdisable = "Checksum: No arreglar";
+                checksumenable = "Checksum: Arreglar";
+                presstart = "PULSA START";
+                reallyformatrpak = "RumblePak insertado";
+                searchfds = "Buscando...";
+                formating = "Formateando...";
+                mpkformat = "Formatear Mempak:";
+                plswait = "Porfavor espera...";
+                errorformating = "Error de formateo!";
+                ratoff = "  Puntos: Off";
+                ratcomo = "  Puntos: Normal";
+                ratuncomo = "  Puntos: No normal";
+                ratrare = "  Puntos: Raro";
+                ratepic = "  Puntos: Epico";
+                ratlegend = "  Puntos: Legendario";
+                bcancel = "B: Cancelar";
+                countrydef = "    Pais: Por defecto";
+                countryntsc = "    Pais: NTSC";
+                countrypal = "    Pais: PAL";
+                Asaveconf = "A: Guardar config";
+                directoriesNO = "No puedes borrar directorios!";
+                bexit = "B: Salir";
+                deletefile = "Borrar este archivo?";
+                aconfirm = "A: Confirmar";
+                znpage = "Z: Siguiente pagina";
             break;
         }
 
@@ -4924,7 +4953,7 @@ int main(void)
                 graphics_draw_text(disp, 94, 93, "3");  //d
                 graphics_draw_text(disp, 82, 82, "4");  //l
 
-                graphics_draw_text(disp, 208, 206, "PRESS START");
+                graphics_draw_text(disp, 208, 206, presstart);
 
                 if (set == 1)
                     drawSet1(disp);

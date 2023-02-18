@@ -6,6 +6,7 @@
 #include "version.h"
 #include "main.h"
 #include "everdrive.h"
+#include "localevar.h"
 
 void menu_controls(display_context_t disp)
 {
@@ -32,6 +33,4 @@ void menu_controls(display_context_t disp)
     printText(" C-down: Toplist 15", 4, -1, disp);
     printText(" ", 4, -1, disp);
     printText("  R + L: Delete file", 4, -1, disp);
-    printText(" ", 4, -1, disp);
-    printText("  Z: Device info", 4, -1, disp);
 }
