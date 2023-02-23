@@ -113,6 +113,8 @@ typedef struct
     int save_backup;
     int language;
     int show_extension;
+    char *splash_image;
+
 
 } configuration;
 
@@ -246,6 +248,7 @@ u8 save_backup = 1;
 u8 language = 0;
 char *background_image;
 u8 show_extension = 0;
+char *splash_image;
 
 //mp3
 int buf_size;
@@ -844,6 +847,10 @@ static int configHandler(void *user, const char *section, const char *name, cons
     {
         pconfig->show_extension = atoi(value);
     }
+    else if (MATCH("ed64", "splash_image"))
+    {
+        pconfig->splash_image = strdup(value);
+    }
     else if (MATCH("user", "name"))
     {
         pconfig->name = strdup(value);
@@ -999,7 +1006,7 @@ void romInfoScreen(display_context_t disp, u8 *buff, int silent)
             printText(rom_name, 11, 19, disp);
 
             //rom size
-            sprintf(rom_name, "Size: %iMB", fsizeMB);
+            sprintf(rom_name, sizeMB, fsizeMB);
             printText(rom_name, 11, -1, disp);
 
 
@@ -1025,7 +1032,7 @@ void romInfoScreen(display_context_t disp, u8 *buff, int silent)
             {
                 printText(fnddb, 11, -1, disp);
                 unsigned char save_type_str[12];
-                sprintf(save_type_str, "Save: %s", saveTypeToExtension(save, ext_type));
+                sprintf(save_type_str, savetypeinf, saveTypeToExtension(save, ext_type));
                 printText(save_type_str, 11, -1, disp);
 
                 unsigned char cic_type_str[12];
@@ -1121,7 +1128,7 @@ sprite_t *loadPng(u8 *png_filename)
 
 void loadgbrom(display_context_t disp, TCHAR *rom_path)
 {
-    drawShortInfoBox(disp, loadgb, 0);
+    drawShortInfoBox(disp, loading, 0);
     FRESULT result;
     FIL emufile;
     UINT emubytesread;
@@ -1196,15 +1203,18 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
         }
         else
         {
-            drawShortInfoBox(disp, loadgb, 0);
+            drawShortInfoBox(disp,  loading, 0);
 
             FRESULT result;
             FIL file;
             UINT bytesread;
             result = f_open(&file, "/"ED64_FIRMWARE_PATH"/UltraSMS.z64", FA_READ);
+        
             if (result == FR_OK)
             {
                 int fsize = f_size(&file);
+
+                
                 result =
                 f_read (
                     &file,        /* [IN] File object */
@@ -1212,7 +1222,10 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
                     fsize,        /* [IN] Number of bytes to read */
                     &bytesread    /* [OUT] Number of bytes read */
                 );
+        
                 f_close(&file);
+            
+
                 romresult =
                 f_read (
                     &romfile,           /* [IN] File object */
@@ -1220,13 +1233,16 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
                     romfsize,           /* [IN] Number of bytes to read */
                     &rombytesread       /* [OUT] Number of bytes read */
                 );
+
                 f_close(&romfile);
+
+            
                 boot_cic = CIC_6102;
                 boot_save = 0; //save off/cpak
                 force_tv = 0;  //no force
                 cheats_on = 0; //cheats off
                 checksum_fix_on = 0;
-
+            
                 checksum_sdram();
                 bootRom(disp, 1);
             }
@@ -1234,7 +1250,7 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
     }
     else
     {
-        drawShortInfoBox(disp, "  Emulator not found", 1);
+        drawShortInfoBox(disp, emunofound, 1);
     }
 }
 void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
@@ -1261,15 +1277,18 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
         }
         else
         {
-            drawShortInfoBox(disp, loadgb, 0);
+            drawShortInfoBox(disp,  loading, 0);
 
-           FRESULT result;
+             FRESULT result;
             FIL file;
             UINT bytesread;
             result = f_open(&file, "/"ED64_FIRMWARE_PATH"/ultraMSX2.z64", FA_READ);
+        
             if (result == FR_OK)
             {
                 int fsize = f_size(&file);
+
+                
                 result =
                 f_read (
                     &file,        /* [IN] File object */
@@ -1277,7 +1296,10 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
                     fsize,        /* [IN] Number of bytes to read */
                     &bytesread    /* [OUT] Number of bytes read */
                 );
+        
                 f_close(&file);
+            
+
                 romresult =
                 f_read (
                     &romfile,           /* [IN] File object */
@@ -1285,13 +1307,16 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
                     romfsize,           /* [IN] Number of bytes to read */
                     &rombytesread       /* [OUT] Number of bytes read */
                 );
+
                 f_close(&romfile);
+
+            
                 boot_cic = CIC_6102;
                 boot_save = 0; //save off/cpak
                 force_tv = 0;  //no force
                 cheats_on = 0; //cheats off
                 checksum_fix_on = 0;
-                
+            
                 checksum_sdram();
                 bootRom(disp, 1);
             }
@@ -1300,13 +1325,13 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
 
     else
     {
-        drawShortInfoBox(disp, "  Emulator not found", 1);
+        drawShortInfoBox(disp, emunofound, 1);
     }
 }
 
 void loadnesrom(display_context_t disp, TCHAR *rom_path)
 {
-    drawShortInfoBox(disp, loadgb, 0);
+    drawShortInfoBox(disp, loading, 0);
     FRESULT result;
     FIL emufile;
     UINT emubytesread;
@@ -1357,7 +1382,7 @@ void loadnesrom(display_context_t disp, TCHAR *rom_path)
     }
     else
     {
-        drawShortInfoBox(disp, "  Emulator not found", 1);
+        drawShortInfoBox(disp, emunofound, 1);
     }
 }
 
@@ -1367,7 +1392,7 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
 {
     clearScreen(disp);
     display_show(disp);
-    drawShortInfoBox(disp, loadgb, 0);
+    printText(loadgb, 3, 4, disp);
 
     TCHAR filename[MAX_SUPPORTED_PATH_LEN];
     sprintf(filename, "%s", buff);
@@ -1421,7 +1446,7 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
             printText(rom_name, 3, -1, disp);
 
             //rom size
-            sprintf(rom_name, "Size: %iMB", fsizeMB);
+            sprintf(rom_name, sizeMB, fsizeMB);
             printText(rom_name, 3, -1, disp);
 
 
@@ -1444,7 +1469,7 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
             {
                 printText(fnddb, 3, -1, disp);
                 unsigned char save_type_str[12];
-                sprintf(save_type_str, "Save: %s", saveTypeToExtension(save, ext_type));
+                sprintf(save_type_str, savetypeinf, saveTypeToExtension(save, ext_type));
                 printText(save_type_str, 3, -1, disp);
 
                 unsigned char cic_type_str[12];
@@ -1694,28 +1719,28 @@ int saveTypeFromSd(display_context_t disp, char *rom_name, int stype)
         switch(result)
         {
         case FR_NOT_READY:
-        printText("ERROR: Not ready.", 11, -1, disp);
+        printText(errornoready, 11, -1, disp);
         break;
         case FR_NO_FILE:
-        printText("ERROR: File doesn't exist.", 11, -1, disp);
+        printText(filenoexist, 11, -1, disp);
         break;
         case FR_NO_PATH:
-        printText("ERROR: Path doesn't exist.", 11, -1, disp);
+        printText(pathnoexist, 11, -1, disp);
         break;
         case FR_INVALID_NAME:
-        printText("ERROR: Invalid name.", 11, -1, disp);
+        printText(invalidname, 11, -1, disp);
         break;
         case FR_DENIED:
-        printText("ERROR: Operation denied.", 11, -1, disp);
+        printText(operdenied, 11, -1, disp);
         break;
         case FR_EXIST:
-        printText("ERROR: File already exists.", 11, -1, disp);
+        printText(filealrrexist, 11, -1, disp);
         break;
         case FR_TIMEOUT:
-        printText("ERROR: Timeout.", 11, -1, disp);
+        printText(errtimeout, 11, -1, disp);
         break;
         case FR_LOCKED:
-        printText("ERROR: Device locked.", 11, -1, disp);
+        printText(devicelocked, 11, -1, disp);
         break;
         default:
         break;
@@ -1926,6 +1951,7 @@ int readConfigFile(void)
             save_backup = config.save_backup;
             language = config.language;
             show_extension = config.show_extension;
+            splash_image = config.splash_image;
 
             return 1;
         }
@@ -2323,52 +2349,9 @@ void bootRom(display_context_t disp, int silent)
 {
     if (boot_cic != 0)
     {
-        // first load cheats if enabled, and error out if we can't
-        u32 *cheat_lists[2] = {NULL, NULL};
-        if (cheats_on)
-        {
-            gCheats = 1;
-           drawShortInfoBox(disp," Trying to load cheat-file...", 0);
-
-            char cheat_filename[64];
-            sprintf(cheat_filename, "/"ED64_FIRMWARE_PATH"/CHEATS/%s.yml", rom_filename);
-
-            int ok = readCheatFile(cheat_filename, cheat_lists);
-            if (ok == 0)
-            {
-                drawShortInfoBox(disp, "    Cheats found...", 0);
-            }
-            else
-            {
-                while (!(disp = display_lock()))
-                        ;
-                new_scroll_pos(&cursor, &page, MAX_LIST, count);
-                clearScreen(disp); //part clear?
-                display_dir(list, cursor, page, MAX_LIST, count, disp);
-                drawBoxNumber(disp, 5);
-                display_show(disp);
-
-                printText("  ", 9, -1, disp);
-                printText("  ", 9, -1, disp);
-                printText("  Cheats not found", 9, -1, disp);
-                printText("  or parsing failed", 9, -1, disp);
-                printText("  ", 9, -1, disp);
-                printText("  Reset console...", 9, -1, disp);
-
-                gCheats = 0;
-                while(true) {
-                    sleep(20000);
-                }
-            }
-        }
-        else
-        {
-            gCheats = 0;
-        }
-
         if (boot_save != 0)
         {
-            TCHAR cfg_file[MAX_SUPPORTED_PATH_LEN];
+            TCHAR cfg_file[32];
 
             //set cfg file with last loaded cart info and save-type
             sprintf(cfg_file, "/"ED64_FIRMWARE_PATH"/%s/LASTROM.CFG", save_path);
@@ -2409,6 +2392,32 @@ void bootRom(display_context_t disp, int silent)
         cart = info >> 16;
         country = (info >> 8) & 0xFF;
 
+        u32 *cheat_lists[2] = {NULL, NULL};
+        if (cheats_on)
+        {
+            gCheats = 1;
+            printText("try to load cheat-file...", 3, -1, disp);
+
+            char cheat_filename[64];
+            sprintf(cheat_filename, "/"ED64_FIRMWARE_PATH"/CHEATS/%s.yml", rom_filename);
+
+            int ok = readCheatFile(cheat_filename, cheat_lists);
+            if (ok == 0)
+            {
+                printText("cheats found...", 3, -1, disp);
+            }
+            else
+            {
+                printText("cheats not found...", 3, -1, disp);
+                sleep(2000);
+                gCheats = 0;
+            }
+        }
+        else
+        {
+            gCheats = 0;
+        }
+
         disable_interrupts();
         int bios_cic = getCicType(1);
 
@@ -2433,12 +2442,13 @@ void bootRom(display_context_t disp, int silent)
     }
 }
 
+
 void playSound(int snd)
 {
     //no thread support in libdragon yet, sounds pause the menu for a time :/
 
     if (snd == 1)
-        sndPlaySFX("rom://sounds/ed64_mono.wav");
+        sndPlaySFX("rom://sounds/boot.wav");
 
     if (snd == 2)
         sndPlaySFX("rom://sounds/bamboo.wav");
@@ -3723,7 +3733,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
                 display_show(disp);
 
-                printText("Mempak-Backup:", 9, 9, disp);
+                printText(mpkbackup, 9, 9, disp);
                 printText(" ", 9, -1, disp);
                 printText(searchfds, 9, -1, disp);
                 mpk_to_file(disp, input_text, 0);
@@ -3973,7 +3983,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
             drawBoxNumber(disp, 2);
             display_show(disp);
 
-            printText("Mempak-Restore:", 9, 9, disp);
+            printText(mpkrestore, 9, 9, disp);
             printText(" ", 9, -1, disp);
 
             file_to_mpk(disp, rom_filename);
@@ -3997,10 +4007,10 @@ void handleInput(display_context_t disp, sprite_t *contr)
                 new_scroll_pos(&cursor, &page, MAX_LIST, count);
                 clearScreen(disp); //part clear?
                 display_dir(list, cursor, page, MAX_LIST, count, disp);
-            drawBoxNumber(disp, 2);
-            display_show(disp);
+                drawBoxNumber(disp, 2);
+                display_show(disp);
 
-            printText("Quick-Backup:", 9, 9, disp);
+            printText(quickback, 9, 9, disp);
             printText(" ", 9, -1, disp);
             printText(searchfds, 9, -1, disp);
 
@@ -4715,7 +4725,7 @@ int main(void)
                 fnddb = "Found in db";
                 done = "         Done";
                 romloaded = "Rom loaded";
-                loadgb = "    Game Loading...";
+                loadgb = "Loading ROM...";
                 loading = "      Loading...";
                 plgmp3 = "    Playing MP3";
                 savemem = "    Save: Off/Mempak";
@@ -4767,6 +4777,45 @@ int main(void)
                 deletefile = "Delete this file?";
                 aconfirm = "A: Confirm";
                 znpage = "Z: Next page";
+                fcontents = "File contents:";
+                freebock = "[Free]";
+                freespace = "Free space:";
+                blocks = "%i blocks";
+                emptyfile = "Empty";
+                filexist = "File exists";
+                overridefile = "Override";
+                fileMPK = "File: %s%i.MPK";
+                backupdone = "Backup done...";
+                sizeMB = "Size: %iMB";
+                savetypeinf = "Save: %s";
+                mpkbackup = "Mempak-Backup:";
+                mpkrestore = "Mempak-Restore:";
+                quickback = "Quick-Backup:";
+                cheatnofound = "Cheats not found";
+                resetconsol = " Reset Console";
+                cheatfound = "    Cheats found...";
+                emunofound = "  Emulator not found";
+                controlsmenucon = "          - Controls -";
+                showmpkmenu = "      L: Show mempak menu";
+                aboutscreen = "      Z: About screen";
+                Astartromdirectory = "A: Start rom/directory";
+                Amempak = "         mempak";
+                Bbackcancel = "      B: Back/Cancel";
+                Startlastrom = "  START: Start last rom";
+                CLEFT = " C-left: Rom info/Mempak";
+                CLEFTVIEMPK = "         Content View";
+                CRIGHT = "C-right: rRom config creen";
+                CUP = "   C-up: View full filename";
+                CDOWN = " C-down: Toplist 15";
+                LplusR = "  R + L: Delete file";
+                errornoready = "ERROR: Not ready.";
+                filenoexist = "ERROR: File doesn't exist.";
+                pathnoexist = "ERROR: Path doesn't exist.";
+                invalidname = "ERROR: Invalid name.";
+                operdenied = "ERROR: Operation denied.";
+                filealrrexist = "ERROR: File already exists.";
+                errtimeout = "ERROR: Timeout.";
+                devicelocked = "ERROR: Device locked.";
             break;
 
             case 1:
@@ -4774,7 +4823,7 @@ int main(void)
                 fnddb = "Encontrado en db";
                 done = "        Hecho";
                 romloaded = "Rom cargada";
-                loadgb = "   Cargando juego...";
+                loadgb = "Cargando ROM...";
                 loading = "     Cargando...";
                 plgmp3 = "  Reproduciendo MP3";
                 savemem = "Guardado: Off/Mempak";
@@ -4826,6 +4875,45 @@ int main(void)
                 deletefile = "Borrar este archivo?";
                 aconfirm = "A: Confirmar";
                 znpage = "Z: Siguiente pagina";
+                fcontents = "Contenidos:";
+                freebock = "[Libre]";
+                freespace = "Espacio libre:";
+                blocks = "%i bloques";
+                emptyfile = "Vacio";
+                filexist = "El archivo existe";
+                overridefile = "Sobreescribiendo";
+                fileMPK = "Archivo: %s%i.MPK";
+                backupdone = "Copia hecha...";
+                sizeMB = "Peso: %iMB";
+                savetypeinf = "Guardado: %s";
+                mpkbackup = "Copiar Mempak:";
+                mpkrestore = "Restaurar Mempak:";
+                quickback = "Copiado rapido:";
+                cheatnofound = "Trucos no encontrados";
+                resetconsol = " Reinicia la consola";
+                cheatfound = " Trucos encontrados...";
+                emunofound = "Emulador no encontrado";
+                controlsmenucon = "         - Controles -";
+                showmpkmenu = "      L: Ver menu del mempak ";
+                aboutscreen = "      Z: Informacion";
+                Astartromdirectory = "A: Iniciar rom/directorio";
+                Amempak = "         mempak";
+                Bbackcancel = "   B: Volver/cancelar";
+                Startlastrom = " START: Iniciar ultima rom";
+                CLEFT = " C-izq: Rom info/Mempak";
+                CLEFTVIEMPK = "         Ver contenido";
+                CRIGHT = "C-der: Config. Rom";
+                CUP = " C-arr: Ver nombre entero";
+                CDOWN = " C-abajo: Toplist 15";
+                LplusR = "  R + L: Borrar archivo";
+                errornoready = "ERROR: No listo.";
+                filenoexist = "ERROR: El archivo no existe.";
+                pathnoexist = "ERROR: El directorio no existe.";
+                invalidname = "ERROR: Nombre invalido.";
+                operdenied = "ERROR: Operacion denegada.";
+                filealrrexist = "ERROR: El archivo ya existe.";
+                errtimeout = "ERROR: Tiempo de espera excedido.";
+                devicelocked = "ERROR: Dispositivo bloqueado.";
             break;
         }
 
@@ -4849,14 +4937,42 @@ int main(void)
         //Grab a render buffer
         while (!(disp = display_lock()))
             ;
-        
         //backgrounds from ramfs/libdragonfs
 
-        char background_path[64];
-        sprintf(background_path, "/"ED64_FIRMWARE_PATH"/wallpaper/%s", background_image);
+        char splash_path[64];
+        sprintf(splash_path, "/"ED64_FIRMWARE_PATH"/wallpaper/%s", splash_image);
 
         FRESULT fr;
         FILINFO fno;
+
+        if (!fast_boot)
+        {
+            fr = f_stat(splash_path, &fno);
+
+            if (fr == FR_OK)
+            {
+                splashscreen = loadPng(splash_path);
+            }
+            else
+            {
+                splashscreen = read_sprite("rom://sprites/splash.sprite");
+            }
+            graphics_draw_sprite(disp, 0, 0, splashscreen); //start-picture
+            display_show(disp);
+
+            if (sound_on)
+            {
+                playSound(1);
+                for (int s = 0; s < 400; s++) //todo: this blocks for 2 seconds (splashscreen)! is there a better way before the main loop starts!
+                {
+                    sndUpdate();
+                    sleep(10);
+                }
+            }
+        }
+
+        char background_path[64];
+        sprintf(background_path, "/"ED64_FIRMWARE_PATH"/wallpaper/%s", background_image);
 
         fr = f_stat(background_path, &fno);
 

@@ -14,6 +14,7 @@
 #include "sram.h"
 #include "rom.h"
 #include "cic.h"
+#include "ff.h"
 
 
 extern short int gCheats;               /* 0 = off, 1 = select, 2 = all */
@@ -260,12 +261,12 @@ int getEeprom16k(  uint8_t *buffer){
 
 int getFlashRAM( uint8_t *buffer){
     evd_setSaveType(SAVE_TYPE_SRAM96); //2
-    sleep(512);
+    sleep(FF_MAX_SS);
 
     int s = getSRAM(buffer, SAVE_SIZE_SRAM96);
     data_cache_hit_writeback_invalidate(buffer,SAVE_SIZE_SRAM96);
 
-    sleep(512);
+    sleep(FF_MAX_SS);
     evd_setSaveType(SAVE_TYPE_FLASH); //5
 
     return 1;
@@ -331,12 +332,12 @@ int setEeprom16k(uint8_t *buffer){
 //isn't working nor finished
 int setFlashRAM(uint8_t *buffer){
     evd_setSaveType(SAVE_TYPE_SRAM96); //2
-    sleep(512);
+    sleep(FF_MAX_SS);
 
     int s = setSRAM(buffer, SAVE_SIZE_SRAM96);
     data_cache_hit_writeback_invalidate(buffer,SAVE_SIZE_SRAM96);
 
-    sleep(512);
+    sleep(FF_MAX_SS);
     evd_setSaveType(SAVE_TYPE_FLASH); //5
 
     return 1;

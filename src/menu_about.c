@@ -18,14 +18,14 @@ void menu_about(display_context_t disp)
     sprintf(firmware_str, "ED64 firmware: v%03x", evd_getFirmVersion());    //2
     printText(firmware_str, 9, -1, disp);   
     printText("by JonesAlmighty", 9, -1, disp);                             //3
-    printText("Based on ALTRA64", 9, -1, disp);                       //4 
+    printText("Based on ALT64", 9, -1, disp);                       //4 
     printText("Credits to:", 9, -1, disp);                                     //5
     printText("Altra 64 Contibutors", 9, -1, disp);                            //6
     printText("", 9, -1, disp);                         //7
     printText("Libraries:", 9, -1, disp);                      //8
     printText("Libdragon", 9, -1, disp);                           //9
     printText("Libmikmod-N64", 9, -1, disp);                             //10
-    printText("Libmad-n64", 9, -1, disp);                       //11
+    printText("Libmad-N64", 9, -1, disp);                       //11
     printText("Libyaml", 9, -1, disp);                             //12
     printText(" ", 9, -1, disp);                                            //13
     printText(znpage, 9, -1, disp);                                 //14

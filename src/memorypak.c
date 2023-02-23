@@ -16,6 +16,7 @@
 #include "debug.h"
 #include "strlib.h"
 #include "sys.h"
+#include "localevar.h"
 #include <stdlib.h>
 
 
@@ -193,7 +194,7 @@ void view_mpk_file(display_context_t disp, char *mpk_filename)
           
         f_close(&file);
 
-        printText("File contents:", 11, 5, disp);
+        printText(fcontents, 11, 5, disp);
         printText("   ", 11, -1, disp);
 
         int notes_c = 0;
@@ -303,17 +304,17 @@ void view_mpk_file(display_context_t disp, char *mpk_filename)
 
             int free_c = 0;
             for (free_c = nNotes; free_c < 16; free_c++)
-                printText("[free]", 11, -1, disp);
+                printText(freebock, 11, -1, disp);
 
             char buff[512];
             printText("   ", 11, -1, disp);
-            printText("Free space:", 11, -1, disp);
-            sprintf(buff, "%i blocks", iRemainingBlocks);
+            printText(freespace, 11, -1, disp);
+            sprintf(buff, blocks, iRemainingBlocks);
             printText(buff, 11, -1, disp);
         }
         else
         {
-            printText("empty", 11, -1, disp);
+            printText(emptyfile, 11, -1, disp);
         }    
     }
 }
@@ -335,9 +336,9 @@ void mpk_to_file(display_context_t disp, char *mpk_filename, int quick)
     fr = f_stat(buff, &fno);
     if(fr == FR_OK)
     {
-        printText("File exists", 9, -1, disp);
+        printText(filexist, 9, -1, disp);
         if (quick)
-            printText("override", 9, -1, disp);
+            printText(overridefile, 9, -1, disp);
         else
             while (fr == FR_OK)
             {
@@ -377,9 +378,9 @@ void mpk_to_file(display_context_t disp, char *mpk_filename, int quick)
         f_close(&file);
 
         
-        sprintf(buff, "File: %s%i.MPK", mpk_filename, v);
+        sprintf(buff, fileMPK, mpk_filename, v);
     
         printText(buff, 9, -1, disp);
-        printText("backup done...", 9, -1, disp);
+        printText(backupdone, 9, -1, disp);
     }
 }
