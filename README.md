@@ -33,7 +33,7 @@ Based on [a fork of alt64](https://github.com/parasyte/alt64) which was original
 ```
 
 ## Building
-[Automated Builds Here](https://github.com/bakapear/altra64/actions)<br>
+[Automated Builds Here](https://github.com/ariahiro64/altra64/actions)<br>
 [Docker Image](https://github.com/ariahiro64/altra64/pkgs/container/altra64)
 
 ```sh
