@@ -33,6 +33,7 @@ Based on [a fork of alt64](https://github.com/parasyte/alt64) which was original
 ```
 
 ## Building
+[Stable Releases Here](https://github.com/Suprapote/Altra64)<br>
 [Automated Builds Here](https://github.com/ariahiro64/altra64/actions)<br>
 [Docker Image](https://github.com/ariahiro64/altra64/pkgs/container/altra64)
 
