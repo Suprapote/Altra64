@@ -1,9 +1,3 @@
-//
-// Copyright (c) 2017 The Altra64 project contributors
-// Portions (c) 2010 chillywilly (https://www.neoflash.com/forum/index.php?topic=6311.0)
-// See LICENSE file in the project root for full license information.
-//
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

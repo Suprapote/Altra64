@@ -1,0 +1,1 @@
+sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make

@@ -11,6 +11,7 @@ void bootRom(display_context_t disp, int silent);
 void loadrom(display_context_t disp, u8 *buff, int fast);
 
 int showThisFolder(int hide_sysfolder, char* fname);
+int showExtension(int show_extension, char* extension);
 
 void readSDcard(display_context_t disp, char *directory);
 int saveTypeToSd(display_context_t disp, char* save_filename ,int type);

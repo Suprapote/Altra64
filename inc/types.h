@@ -32,3 +32,4 @@ typedef uint64_t sim_u64;
 
 
 #endif	/* _TYPES_H */
+

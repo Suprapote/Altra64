@@ -160,5 +160,4 @@ u32 memRomRead32(u32 addr) {
 u8 mem_spi(u8 dat) {
     return evd_SPI(dat);
 }
-
  */

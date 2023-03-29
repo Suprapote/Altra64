@@ -1,4 +1,3 @@
-
 #include <libdragon.h>
 #include "types.h"
 #include "debug.h"
