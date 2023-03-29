@@ -84,10 +84,10 @@ int get_cic(unsigned char *rom_data) {
         return 6;
         break;
 
-        //case CRC_NUS_8303: //not sure if this is necessary as we are using cart conversions
+        case CRC_NUS_8303: //not sure if this is necessary as we are using cart conversions
         //*cic_seed = CIC_SEED_NUS_8303;
-        //return 7;
-        //break;
+        return 7;
+        break;
 
         default:
         break;
