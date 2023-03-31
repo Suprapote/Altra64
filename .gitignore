@@ -1,13 +1,9 @@
-## Build folder
-/build/*
 ## Build files
 *.v64
 *.elf
 *.o
 *.bin
 *.dfs
-## Don't delete emulators
-!res/emulators/*
 
 ## OSX junk
 .DS_Store
@@ -17,8 +13,3 @@
 ## Temporary files
 *.tmp
 *~
-*.VC.db*
-*properties.json
-/.vs
-/.vscode
-release
