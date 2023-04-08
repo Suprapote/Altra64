@@ -1,14 +1,13 @@
-/* 
- * File:   types.h
- * Author: KRIK
- *
- * Created on 16 јпрель 2011 г., 2:24
- */
-
-#include <stdint.h>
+//
+// Copyright (c) 2017 The Altra64 project contributors
+// Portions (c) 2011 KRIK
+// See LICENSE file in the project root for full license information.
+//
 
 #ifndef _TYPES_H
 #define	_TYPES_H
+
+#include <stdint.h>
 
 #define u8 unsigned char
 #define u16 unsigned short
@@ -33,4 +32,6 @@ typedef uint64_t sim_u64;
 
 
 #endif	/* _TYPES_H */
+
+
 

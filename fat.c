@@ -10,15 +10,6 @@
 #include "sys.h"
 #include <libdragon.h>
 
-
-
-
-
-
-
-
-
-
 //FatRecordHdr rec_hdr;
 
 

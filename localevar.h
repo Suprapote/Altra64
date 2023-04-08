@@ -1,0 +1,12 @@
+char* dirempty;
+char* fnddb;
+char* loadplswait;
+char* freeblock;
+char* freespaceblk;
+char* aviableblocks;
+char* fcontent;
+char* filexist;
+char* vacio;
+char* sobrescribir;
+char* bkphecho;
+char* nohaypartida;

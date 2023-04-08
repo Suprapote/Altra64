@@ -48,7 +48,8 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 
-struct glyph {
+struct glyph
+{
     int xoff;
     int yoff;
     int adv;
@@ -69,7 +70,7 @@ typedef struct
 {
     uint32_t type;
     uint32_t color;
-    char filename[MAX_FILENAME_LEN+1];
+    char filename[MAX_FILENAME_LEN + 1];
 } direntry_t;
 
 
@@ -99,6 +100,7 @@ typedef struct
     int text_offset;
     int hide_sysfolder;
     int sd_speed;
+    int language;
 
 } configuration;
 
@@ -138,21 +140,6 @@ u16 cursor_history_pos=0;
 u8 empty=0;
 u8 playing=0;
 u8 gb_load_y=0;
-
-//start with filebrowser menu key settings
-/* 1=filemanager
- * 2=mempak-menu
- * 3=charinput
- * 4=rom loaded
- * 5=format mpk
- * 6=restore mpk
- * 7=rom config box
- * 8=toplist
- * 9=mpk choice
- * 10=mpk quick-backup
- * 11=mp3
- * 98= A/B abort screen
- */
 
 enum InputMap
 {
@@ -217,7 +204,7 @@ u32 border_color_1=0xFFFFFFFF; //hex 0xRRGGBBAA AA=transparenxy
 u32 border_color_2=0x3F3F3FFF;
 u32 box_color=0x00000080;
 u32 selection_color=0x6495ED60;
-u32 selection_font_color=0xFFFFFFFF;
+u32 selection_font_color=0xFFB90FFF;
 u32 list_font_color=0xFFFFFFFF;
 u32 list_dir_font_color=0xFFFFFFFF;
 
@@ -242,6 +229,7 @@ u8 cd_behaviour=0; //0=first entry 1=last entry
 u8 scroll_behaviour=0; //1=classic 0=new page-system
 u8 ext_type=0; //0=classic 1=org os
 u8 sd_speed=1; // 1=25Mhz 2=50Mhz
+u8 language=1; // 1=25Mhz 2=50Mhz
 u8 hide_sysfolder=0;
 char* background_image;
 
@@ -468,7 +456,7 @@ void display_dir(direntry_t *list, int cursor, int page, int max, int count, dis
     }
 
     if( max == 0 ) {
-        printText("Dir empty...", 3, 6, disp);
+        printText(dirempty, 3, 6, disp);
         sprintf(sel_str, "Dir empty...");
         empty=1;
     }
@@ -659,9 +647,14 @@ void drawBoxNumber(display_context_t disp, int box){
     int old_color = box_color;
     //backup color
 
-    switch(box){
-    case 1:    drawBox(20, 24, 277, 193, disp); break; //filebrowser
-    case 2:    drawBox(60, 56, 200, 128, disp); break; //info screen
+    switch(box)
+    {
+    case 1:   
+        drawBox(20, 24, 277, 193, disp); 
+    break; //filebrowser
+    case 2:    
+        drawBox(60, 56, 200, 128, disp); 
+    break; //info screen
     case 3:
         box_color= graphics_make_color(0x00, 0x00, 0x60, 0xC9);
         drawBox(79, 29, 161, 180, disp);
@@ -778,6 +771,9 @@ static int configHandler(void* user, const char* section, const char* name, cons
     else if (MATCH("ed64", "sd_speed")) {
         pconfig->sd_speed = atoi(value);
     }
+    else if (MATCH("ed64", "language")) {
+        pconfig->language = atoi(value);
+    }
     else if (MATCH("ed64", "hide_sysfolder")) {
         pconfig->hide_sysfolder = atoi(value);
     }
@@ -891,7 +887,7 @@ void romInfoScreen(display_context_t disp, u8 *buff, int silent){
     }
 
     //char 32-51 name
-    unsigned char rom_name[256];
+    unsigned char rom_name[32];
 
     for(int u=0; u<19;u++){
         if(u!=0)
@@ -906,7 +902,16 @@ void romInfoScreen(display_context_t disp, u8 *buff, int silent){
     if(silent!=1)
         printText(rom_name, 11, 19, disp);
 
-    sprintf(rom_name, "Size: %iMb", mb);
+    switch(language)
+    {
+         default:
+            sprintf(rom_name, "Size: %iMb", mb);
+        break;
+
+        case 1:
+            sprintf(rom_name, "Peso: %iMb", mb);
+        break;
+    }
 
     if(silent!=1)
         printText(rom_name, 11, -1, disp);
@@ -928,9 +933,18 @@ void romInfoScreen(display_context_t disp, u8 *buff, int silent){
 
     if (get_cic_save(cartID_short, &cic, &save)) {
         if(silent!=1)
-        printText("Found in DB", 11, -1, disp);
+        printText(fnddb, 11, -1, disp);
            unsigned char save_type_str[12];
-           sprintf(save_type_str, "Save: %s",  saveTypeToExtension(save,ext_type));
+            switch(language)
+            {
+                default:
+                    sprintf(save_type_str, "Save: %s",  saveTypeToExtension(save,ext_type));
+                break;
+
+                 case 1:
+                    sprintf(save_type_str, "Guardado: %s",  saveTypeToExtension(save,ext_type));
+                break;
+            }       
            if(silent!=1)
            printText(save_type_str, 11, -1, disp);
 
@@ -1021,7 +1035,7 @@ void loadgbrom(display_context_t disp, u8 *rom_path){
     exist = fatFindRecord("/ED64P/gb.v64", &rec_tmpf, 0); //filename already exists
 
     if (exist == 0) {
-        printText("Loading please wait...", 3, 4, disp);
+        printText(loadplswait, 3, 4, disp);
         input_mapping=none;//disable all
 
         u8 resp=0;
@@ -1043,8 +1057,16 @@ void loadgbrom(display_context_t disp, u8 *rom_path){
     }
     else{
         //error
+        switch(language)
+        {
+            default:
+                drawShortInfoBox(disp, "  Emulator not found",1);
+            break;
 
-        drawShortInfoBox(disp, "  Emulator not found",1);
+            case 1:
+                drawShortInfoBox(disp, "  Emulador no encontrado",1);
+            break;
+        }
         input_mapping=abort_screen;
 
         return;
@@ -1059,13 +1081,13 @@ void loadmsx2rom(display_context_t disp, u8 *rom_path){
     if(fsize>128*1024){
         //error
 
-        drawShortInfoBox(disp, "  Error: ROM > 128KB",1);
+        drawShortInfoBox(disp, "  ERROR: ROM > 128KB",1);
         input_mapping=abort_screen;
 
         return;
     }
     else{
-        printText("Loading please wait...", 3, 4, disp);
+        printText(loadplswait, 3, 4, disp);
         input_mapping=none;//disable all
     }
 
@@ -1101,7 +1123,16 @@ void loadmsx2rom(display_context_t disp, u8 *rom_path){
     else{
         //error
 
-        drawShortInfoBox(disp, "  Emulator not found",1);
+        switch(language)
+        {
+            default:
+                drawShortInfoBox(disp, "  Emulator not found",1);
+            break;
+
+            case 1:
+                drawShortInfoBox(disp, "  Emulador no encontrado",1);
+            break;
+        }
         input_mapping=abort_screen;
 
         return;
@@ -1116,13 +1147,13 @@ void loadggrom(display_context_t disp, u8 *rom_path){
 
     if(fsize>512*1024){
         //error
-        drawShortInfoBox(disp, "  Error: ROM > 512KB",1);
+        drawShortInfoBox(disp, "  ERROR: ROM > 512KB",1);
         input_mapping=abort_screen;
 
         return;
     }
     else{
-        printText("Loading please wait...", 3, 4, disp);
+        printText(loadplswait, 3, 4, disp);
         input_mapping=none;//disable all
     }
 
@@ -1158,7 +1189,16 @@ void loadggrom(display_context_t disp, u8 *rom_path){
     else{
         //error
 
-        drawShortInfoBox(disp, "  Emulator not found",1);
+        switch(language)
+        {
+            default:
+                drawShortInfoBox(disp, "  Emulator not found",1);
+            break;
+
+            case 1:
+                drawShortInfoBox(disp, "  Emulador no encontrado",1);
+            break;
+        }
         input_mapping=abort_screen;
 
         return;
@@ -1187,7 +1227,7 @@ void loadnesrom(display_context_t disp, u8 *rom_path){
     exist = fatFindRecord("/ED64P/neon64bu.rom", &rec_tmpf, 0); //filename already exists
 
     if (exist == 0) {
-        printText("Loading please wait...", 3, 4, disp);
+        printText(loadplswait, 3, 4, disp);
         input_mapping=none;//disable all
 
         u8 resp=0;
@@ -1210,7 +1250,16 @@ void loadnesrom(display_context_t disp, u8 *rom_path){
     else{
         //error
 
-        drawShortInfoBox(disp, "  Emulator not found",1);
+        switch(language)
+        {
+            default:
+                drawShortInfoBox(disp, "  Emulator not found",1);
+            break;
+
+            case 1:
+                drawShortInfoBox(disp, "  Emulador no encontrado",1);
+            break;
+        }
         input_mapping=abort_screen;
 
         return;
@@ -1297,7 +1346,7 @@ void loadrom(display_context_t disp, u8 *buff, int fast){
 
     if (get_cic_save(cartID_short, &cic, &save)) {
         if(!fast)
-            printText("Found in DB", 3, -1, disp);
+            printText(fnddb, 3, -1, disp);
         //thanks for the db :>
         // cart was found, use CIC and SaveRAM type
     }
@@ -1336,9 +1385,9 @@ void loadrom(display_context_t disp, u8 *buff, int fast){
     }
 
     if(!fast)
-        printText("Loading please wait...", 3, -1, disp);
+        printText(loadplswait, 3, -1, disp);
     else
-        printText("Loading please wait...", 3, 4, disp);
+        printText(loadplswait, 3, 4, disp);
 
     sleep(10);
 
@@ -1359,10 +1408,22 @@ void loadrom(display_context_t disp, u8 *buff, int fast){
     if(!fast){
         sleep(200);
 
-        printText(" ", 3, -1, disp);
-        printText("(C-UP to activate cheats)", 3, -1, disp);
-        printText("(C-RIGHT to force menu tv mode)", 3, -1, disp);
-        printText("Done: PRESS START", 3, -1, disp);
+        switch(language)
+        {
+            default:
+                printText(" ", 3, -1, disp);
+                printText("(C-UP to activate cheats)", 3, -1, disp);
+                printText("(C-RIGHT to force menu tv mode)", 3, -1, disp);
+                printText("Done: PRESS START", 3, -1, disp);
+            break;
+
+            case 1:
+                printText(" ", 3, -1, disp);
+                printText("(C-ARRIBA activar trucos)", 3, -1, disp);
+                printText("(C-DERECHO forzar modo de TV)", 3, -1, disp);
+                printText("Hecho: PULSA START", 3, -1, disp);
+            break;
+        }
     }
     else{
         bootRom(disp, 1);
@@ -1382,7 +1443,16 @@ int backupSaveData(display_context_t disp){
         FatRecord rec_tmpf;
         found = fatFindRecord(fname, &rec_tmpf, 0);
 
-        printText("Save System - please stand by", 3, 4, disp);
+        switch(language)
+        {
+            default:
+                printText("Save System - please stand by", 3, 4, disp);
+            break;
+
+            case 1:
+                printText("Guardar Sistema - porfavor espera", 3, 4, disp);
+            break;
+        }
 
         if(found==0){
             //found
@@ -1417,7 +1487,16 @@ int backupSaveData(display_context_t disp){
                     save_reboot=1;
             }
             else {
-                    printText("...Ready", 3, -1, disp);
+                    switch(language)
+                    {
+                        default:
+                            printText("Ready.", 3, -1, disp);
+                        break;
+
+                        case 1:
+                            printText("Listo.", 3, -1, disp);
+                        break;
+                    }
 
                 sleep(200);
 
@@ -1425,20 +1504,56 @@ int backupSaveData(display_context_t disp){
             }
         }
         else{
-                printText("...Ready", 3, -1, disp);
+               switch(language)
+                    {
+                        default:
+                            printText("Ready.", 3, -1, disp);
+                        break;
+
+                        case 1:
+                            printText("Listo.", 3, -1, disp);
+                        break;
+                    }
 
             return 0;
         }
 
         //reset with save request
         if(save_reboot){
-            printText("Saving...", 3, -1, disp);
+            switch(language)
+                    {
+                        default:
+                            printText("Saving...", 3, -1, disp);
+                        break;
+
+                        case 1:
+                            printText("Guardando...", 3, -1, disp);
+                        break;
+                    }
             if(  saveTypeToSd(disp, rom_filename, save_t) ){
-                    printText("...Ready", 3, -1, disp);
+                    switch(language)
+                    {
+                        default:
+                            printText("Ready.", 3, -1, disp);
+                        break;
+
+                        case 1:
+                            printText("Listo.", 3, -1, disp);
+                        break;
+                    }
             }
         }
         else {
-                printText("...Ready", 3, -1, disp);
+                switch(language)
+                    {
+                        default:
+                            printText("Ready.", 3, -1, disp);
+                        break;
+
+                        case 1:
+                            printText("Listo.", 3, -1, disp);
+                        break;
+                    }
 
             sleep(300);
         }
@@ -1569,7 +1684,7 @@ void view_mpk_file(display_context_t disp, char *mpk_filename){
         resp = fatReadFile(&mempak_data, 32768 / 512);
     }
 
-    printText("File content:", 11, 5, disp);
+    printText(fcontent, 11, 5, disp);
     printText("   ", 11, -1, disp);
 
     int notes_c=0;
@@ -1666,16 +1781,16 @@ void view_mpk_file(display_context_t disp, char *mpk_filename){
 
         int free_c=0;
         for(free_c=nNotes;free_c<16;free_c++)
-            printText("[Free]", 11, -1, disp);
+            printText(freeblock, 11, -1, disp);
 
         char buff[512];
         printText("   ", 11, -1, disp);
-        printText("Free space:", 11, -1, disp);
-        sprintf(buff, "%i Blocks", iRemainingBlocks );
+        printText(freespaceblk, 11, -1, disp);
+        sprintf(buff, aviableblocks, iRemainingBlocks );
         printText(buff, 11, -1, disp);
     }
     else {
-        printText("Empty", 11, -1, disp);
+        printText(vacio, 11, -1, disp);
     }
 }
 
@@ -1693,9 +1808,9 @@ void mpk_to_file(display_context_t disp, char *mpk_filename, int quick) {
     FatRecord rec_tmpf;
 
     if(!fatFindRecord(buff, &rec_tmpf, 0)){ //filename already exists
-        printText("File exists", 9, -1, disp);
+        printText(filexist, 9, -1, disp);
         if(quick)
-            printText("Override", 9, -1, disp);
+            printText(sobrescribir, 9, -1, disp);
         else
             while(ok==0){
                 sprintf(buff, "%s%s%i.MPK",mempak_path, mpk_filename,v);
@@ -1726,7 +1841,7 @@ void mpk_to_file(display_context_t disp, char *mpk_filename, int quick) {
     sprintf(buff, "File: %s%i.MPK",mpk_filename,v);
 
     printText(buff, 9, -1, disp);
-    printText("Backup done...", 9, -1, disp);
+    printText(bkphecho, 9, -1, disp);
 }
 
 //before boot_simulation
@@ -1756,7 +1871,7 @@ int saveTypeFromSd(display_context_t disp, char* rom_name, int stype) {
 
     }
     else{
-        printText("No savegame found", 3, -1, disp);
+        printText(nohaypartida, 3, -1, disp);
         //todo clear memory arena
 
         return 0;
@@ -1765,11 +1880,29 @@ int saveTypeFromSd(display_context_t disp, char* rom_name, int stype) {
     if(gb_load_y!=1) {
         if( pushSaveToCart(stype, cartsave_data) ){
 
-            printText("Save upload done...", 3, -1, disp);
+            switch(language)
+            {
+                default:
+                    printText("Transferred save data.", 3, -1, disp);
+                break;
+
+                case 1:
+                    printText("Datos transferidos.", 3, -1, disp);
+                break;
+            }
         }
         else{
 
-            printText("PushSaveToCart error", 3, -1, disp);
+            switch(language)
+            {
+                default:
+                    printText("Error transfering save data.", 3, -1, disp);
+                break;
+
+                case 1:
+                    printText("Error transfiriendo datos.", 3, -1, disp);
+                break;
+            }
         }
     }
 
@@ -1798,7 +1931,16 @@ int saveTypeToSd(display_context_t disp, char* rom_name ,int stype) {
     //FAT_ERR_NOT_EXIST 100
     if(found!=0){
         //create before save
-        printText("Try fatCreateRecIfNotExist", 3, -1, disp);
+        switch(language)
+            {
+                default:
+                    printText("Transfering save data...", 3, -1, disp);
+                break;
+
+                case 1:
+                    printText("Transfiriendo datos...", 3, -1, disp);
+                break;
+            }
         resp = fatCreateRecIfNotExist(fname, 0);
 
     }
@@ -1816,18 +1958,45 @@ int saveTypeToSd(display_context_t disp, char* rom_name ,int stype) {
     //returns data from fpga/cart to save on sd
 
     if(getSaveFromCart(stype, cartsave_data)) {
-        printText("Got save from fpga", 3, -1, disp);
+        switch(language)
+        {
+            default:
+                printText("Getting save from fpga", 3, -1, disp);
+            break;
+
+            case 1:
+                printText("Obteniendo partida de fpga", 3, -1, disp);
+            break;
+        }
         //write to file
 
         if(gb_load_y!=1)
             fatWriteFile(&cartsave_data, size / 512);
 
-        printText("Reset-save done...", 3, -1, disp);
+        switch(language)
+        {
+            default:
+                printText("RAM area copied to SD card.", 3, -1, disp);
+            break;
+
+            case 1:
+                printText("Area de RAM copiada a la SD.", 3, -1, disp);
+            break;
+        }
         sleep(3000);
         return 1;
     }
     else {
-        printText("GetSaveFromCart error", 3, -1, disp);
+        switch(language)
+        {
+            default:
+                 printText("Error saving game to SD", 3, -1, disp);
+            break;
+
+            case 1:
+                 printText("Error al guardar en la SD", 3, -1, disp);
+            break;
+        }
         sleep(3000);
         return 0;
     }
@@ -1882,6 +2051,7 @@ int readConfigFile(void){
         text_offset=config.text_offset;
         hide_sysfolder=config.hide_sysfolder;
         sd_speed=config.sd_speed;
+        language=config.language;
         background_image=config.background_image;
 
         return 1;
@@ -1950,7 +2120,17 @@ void readSDcard(display_context_t disp, char *directory){
 
 
     clearScreen(disp);
-    printText("SD-Card loading...", 3, 4, disp); //very short display time maybe comment out
+
+    switch(language)
+        {
+            default:
+                printText("SD-Card loading...", 3, 4, disp); //very short display time maybe comment out
+            break;
+
+            case 1:
+                printText("Cargando tarjeta SD...", 3, 4, disp); //very short display time maybe comment out
+            break;
+        }
 
     u8 buff[32];
 
@@ -2269,18 +2449,46 @@ void bootRom(display_context_t disp, int silent) {
         u32 *cheat_lists[2] = { NULL, NULL };
         if (cheats_on) {
             gCheats = 1;
-            printText("Try to load cheat-file...", 3, -1, disp);
+            
+            switch(language)
+            {
+                    default:
+                        printText("Try to load cheat-file...", 3, -1, disp);
+                    break;
+
+                    case 1:
+                        printText("Intentando cargar trucos...", 3, -1, disp);
+                    break;
+            }
 
             char cheat_filename[64];
             sprintf(cheat_filename, "/ED64P/CHEATS/%s.yml", rom_filename);
 
             int ok = readCheatFile(cheat_filename, cheat_lists);
             if (ok == 0) {
-                printText("Cheats found...", 3, -1, disp);
+                switch(language)
+                {
+                    default:
+                        printText("Cheats found.", 3, -1, disp);
+                    break;
+
+                    case 1:
+                        printText("Trucos encontrados.", 3, -1, disp);
+                    break;
+                }
                 sleep(600);
             }
             else {
-                printText("Cheats not found...", 3, -1, disp);
+                 switch(language)
+                {
+                    default:
+                        printText("Cheats not found.", 3, -1, disp);
+                    break;
+
+                    case 1:
+                        printText("Trucos no encontrados.", 3, -1, disp);
+                    break;
+                }
                 sleep(2000);
                 gCheats = 0;
             }
@@ -2317,7 +2525,7 @@ void playSound(int snd){
 
     static SAMPLE *add_sfx = NULL;
     if(snd==1)
-        add_sfx = Sample_Load("rom://ED64P_mono.wav");
+        add_sfx = Sample_Load("rom://boot.wav");
 
     if(snd==2)
         add_sfx = Sample_Load("rom://bamboo.wav");
@@ -2381,15 +2589,32 @@ void drawConfirmBox(display_context_t disp){
 
     display_show(disp);
 
-    printText(" ", 9, 9, disp);
-    printText("Confirmation required:", 9, -1, disp);
-    printText(" ", 9, -1, disp);
-    printText(" ", 9, -1, disp);
-    printText("    Are you sure?", 9, -1, disp);
-    printText(" ", 9, -1, disp);
-    printText("    C-UP Continue ", 9, -1, disp); //set mapping 3
-    printText(" ", 9, -1, disp);
-    printText("      B Cancel", 9, -1, disp);
+    switch(language)
+        {
+            default:
+                printText(" ", 9, 9, disp);
+                printText("Confirmation required:", 9, -1, disp);
+                printText(" ", 9, -1, disp);
+                printText(" ", 9, -1, disp);
+                printText("    Are you sure?", 9, -1, disp);
+                printText(" ", 9, -1, disp);
+                printText("    C-UP Continue ", 9, -1, disp); //set mapping 3
+                printText(" ", 9, -1, disp);
+                printText("      B Cancel", 9, -1, disp);
+            break;
+
+            case 1:
+                printText(" ", 9, 9, disp);
+                printText("Confirmacion requerida:", 9, -1, disp);
+                printText(" ", 9, -1, disp);
+                printText(" ", 9, -1, disp);
+                printText("    Estas seguro?", 9, -1, disp);
+                printText(" ", 9, -1, disp);
+                printText("  C-ARRIBA Continuar ", 9, -1, disp); //set mapping 3
+                printText(" ", 9, -1, disp);
+                printText("      B Cancelar", 9, -1, disp);
+            break;
+        }
 
     if(sound_on)
         playSound(3);
@@ -2398,6 +2623,7 @@ void drawConfirmBox(display_context_t disp){
 }
 
 void drawShortInfoBox(display_context_t disp, char* text, u8 mode){
+
     if(mode==0)
         drawBoxNumber(disp,7);
     else if(mode==1)
@@ -2467,7 +2693,7 @@ void alterRomConfig(int type, int mode){
 
     //save
     u8  min_save=0;
-    u8  max_save=7;
+    u8  max_save=5;
 
     //tv-type
     u8    min_tv=0;
@@ -2728,9 +2954,22 @@ void drawRomConfigBox(display_context_t disp,int line){
 
     drawConfigSelection(disp, rom_config[0]);
 
-    printText(" ", 9, 9, disp);
-    printText("Rom configuration:", 9, -1, disp);
-    printText(" ", 9, -1, disp);
+    
+
+    switch(language)
+    {
+        default:
+            printText(" ", 9, 9, disp);
+            printText("Rom configuration:", 9, -1, disp);
+            printText(" ", 9, -1, disp);
+        break;
+
+        case 1:
+            printText(" ", 9, 9, disp);
+            printText("Configuracion de Rom:", 9, -1, disp);
+            printText(" ", 9, -1, disp);
+        break;
+    }
 
     switch(rom_config[1]){
         case 0:    printText("     CIC: 6101", 9, -1, disp); break;
@@ -2791,9 +3030,21 @@ void drawRomConfigBox(display_context_t disp,int line){
         default: break;
     }
 
-    printText(" ", 9, -1, disp);
-    printText("B Cancel", 9, -1, disp);
-    printText("A Save config", 9, -1, disp);
+
+    switch(language)
+    {
+        default:
+            printText(" ", 9, -1, disp);
+            printText("B Cancel", 9, -1, disp);
+            printText("A Save config", 9, -1, disp);
+        break;
+
+        case 1:
+            printText(" ", 9, -1, disp);
+            printText("B Cancelar", 9, -1, disp);
+            printText("A Guardar config", 9, -1, disp);
+        break;
+    }
 }
 
 //draws the charset for the textinputscreen
@@ -2881,7 +3132,6 @@ void drawSet4(display_context_t disp){
     graphics_draw_text( disp, 209, 100, "_" );
 }
 
-
 //entry point
 int main(void) {
     int fast_boot=0;
@@ -2931,6 +3181,22 @@ int main(void) {
         //Grab a render buffer
         while( !(disp = display_lock()) );
         //backgrounds from ramfs/libdragonfs
+        /*if (!fast_boot)
+        {
+            background0 = read_sprite("rom://sprites/splash.sprite");
+            graphics_draw_sprite(disp, 0, 0, background0); //start-picture
+            display_show(disp);
+
+            if (sound_on)
+            {
+                playSound(1);
+                for (int s = 0; s < 40; s++) //todo: this blocks for 4 seconds (splashscreen)! is there a better way before the main loop starts!
+                {
+                    MikMod_Update();
+                    sleep(10);
+                }
+            }
+        }*/
 
         char background_path[64];
         sprintf(background_path, "/ED64P/wallpaper/%s", background_image);
@@ -2944,6 +3210,10 @@ int main(void) {
             background = read_sprite( "rom://sprites/background.sprite" );
         }
         sleep(200);
+        
+        if (sound_on){
+        MikMod_Init("rom://bgm21.it");
+        }
 
         //mp3
         int buf_size;
@@ -3014,6 +3284,39 @@ int main(void) {
             bi_speed25();
         }
 
+        switch(language)
+        {
+            default:
+                dirempty = "Dir empty...";
+                fnddb = "Found in DB";
+                loadplswait = "Loading, please wait.";
+                freeblock = "[Free]";
+                freespaceblk = "Free space:";
+                aviableblocks = "%i Blocks";
+                fcontent = "File content:";
+                filexist = "File exists";
+                vacio = "Empty";
+                sobrescribir = "Overwriting";
+                bkphecho = "Backup done...";
+                nohaypartida = "No savegame found";
+            break;
+
+            case 1:
+                dirempty = "Directorio vacio...";
+                fnddb = "Encontrado en BD";
+                loadplswait = "Cargando, por favor espera.";
+                freeblock = "[Libre]";
+                freespaceblk = "Espacio libre:";
+                aviableblocks = "%i Bloques";
+                fcontent = "Contenido del archivo:";
+                filexist = "El archivo existe";
+                vacio = "Vacio";
+                sobrescribir = "Sobrescribiendo";
+                bkphecho = "Copia hecha...";
+                nohaypartida = "No hay partida guardada";
+            break;
+        }
+
         //system main-loop with controller inputs-scan
         while(1) {
             if (playing==1)
@@ -3061,6 +3364,37 @@ int main(void) {
             struct controller_data keys_held = get_keys_held();
 
             if( keys.c[0].err != ERROR_NONE ){
+                drawBoxNumber(disp,5);
+
+                    display_show(disp);
+
+                    printText(" ", 9, 9, disp);
+                    printText(" ", 9, 9, disp);
+                    printText(" ", 9, 9, disp);
+                    printText(" ", 9, 9, disp);
+                    printText(" ", 9, 9, disp);
+                    printText(" ", 9, 9, disp);
+                    printText(" ", 9, 9, disp);
+                    printText(" ", 9, 9, disp);
+                    switch(language)
+                    {
+                        default:
+                            printText("Connect a controller ", 9, -1, disp);
+                            printText(" ", 9, -1, disp);
+                            printText("and press reset", 9, -1, disp);
+                        break;
+
+                        case 1:
+                            printText("Conecta un control ", 9, -1, disp);
+                            printText(" ", 9, -1, disp);
+                            printText("y pulsa reset", 9, -1, disp);
+                        break;
+                    }
+                    printText(" ", 9, -1, disp);
+                    printText(" ", 9, 9, disp);
+                    printText(" ", 9, 9, disp);
+                    printText(" ", 9, 9, disp);
+                    printText(" ", 9, 9, disp);
                 return 0;
             }
 
@@ -3289,8 +3623,16 @@ int main(void) {
                             display_show(disp);
                         }
                         //nothing else :>
+                        switch(language)
+                        {
+                            default:
+                                drawShortInfoBox(disp, "    Rom not found",0);
+                            break;
 
-                        drawShortInfoBox(disp, "    Rom not found",0);
+                            case 1:
+                                drawShortInfoBox(disp, "Rom no encontrada",0);
+                            break;
+                        }
                     }
                     else if(list[cursor].type != DT_DIR  && empty==0){
                         char name_file[64];
@@ -3456,13 +3798,33 @@ int main(void) {
 
                         display_show(disp);
 
-                        printText("Mempak-Backup:", 9, 9, disp);
-                        printText(" ", 9, -1, disp);
-                        printText("Search...", 9, -1, disp);
+                        switch(language)
+                        {
+                            default:
+                                printText("Mempak-Backup:", 9, 9, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("Searching...", 9, -1, disp);
+                            break;
+
+                            case 1:
+                                printText("Copiando Mempak:", 9, 9, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("Buscando...", 9, -1, disp);
+                            break;
+                        }
                         mpk_to_file(disp, input_text, 0);
                         sleep(300);
 
-                        drawShortInfoBox(disp, "         Done",0);
+                        switch(language)
+                        {
+                            default:
+                                drawShortInfoBox(disp, "         Done",0);
+                            break;
+
+                            case 1:
+                                drawShortInfoBox(disp, "        Hecho",0);
+                            break;
+                        }
                         sleep(2000);
 
                         //reread filesystem
@@ -3490,14 +3852,30 @@ int main(void) {
 
                     display_show(disp);
 
-                    printText("Mempak-Subsystem:", 9, 9, disp);
-                    printText(" ", 9, -1, disp);
-                    printText(" ", 9, -1, disp);
-                    printText("  A: Backup - new", 9, -1, disp); //set mapping 3
-                    printText(" ", 9, -1, disp);
-                    printText("  R: Format", 9, -1, disp);
-                    printText(" ", 9, -1, disp);
-                    printText("  B: Abort", 9, -1, disp);
+                    switch(language)
+                        {
+                            default:
+                                printText("Mempak-Subsystem:", 9, 9, disp);
+                                printText(" ", 9, -1, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("  A: Backup - new", 9, -1, disp); //set mapping 3
+                                printText(" ", 9, -1, disp);
+                                printText("  R: Format", 9, -1, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("  B: Abort", 9, -1, disp);
+                            break;
+
+                            case 1:
+                                printText("Subsistema Mempak:", 9, 9, disp);
+                                printText(" ", 9, -1, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("  A: Nueva copia", 9, -1, disp); //set mapping 3
+                                printText(" ", 9, -1, disp);
+                                printText("  R: Formatear", 9, -1, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("  B: Abortar", 9, -1, disp);
+                            break;
+                        }
                     if(sound_on) playSound(2);
                     sleep(500);
                 }
@@ -3608,7 +3986,18 @@ int main(void) {
                 else if(input_mapping==rom_loaded){
                     //rom start screen
                     if(cheats_on==0){
-                        printText("Cheat system activated...", 3, -1, disp);
+                        
+
+                         switch(language)
+                        {
+                            default:
+                                printText("Cheat system activated...", 3, -1, disp);
+                            break;
+
+                            case 1:
+                                printText("Sistema de trucos activado...", 3, -1, disp);
+                            break;
+                        }
                         cheats_on=1;
                     }
                 }
@@ -3621,6 +4010,23 @@ int main(void) {
 
                     printText("Formating...", 9, -1, disp);
 
+                     switch(language)
+                        {
+                            default:
+                                printText("Mempak-Format:", 9, 9, disp);
+                                printText(" ", 9, -1, disp);
+
+                                printText("Formating...", 9, -1, disp);
+                            break;
+
+                            case 1:
+                                printText("Formatear Mempak:", 9, 9, disp);
+                                printText(" ", 9, -1, disp);
+
+                                printText("Formateando...", 9, -1, disp);
+                            break;
+                        }
+
                     /* Make sure they don't have a rumble pak inserted instead */
                     switch( identify_accessory( 0 ) ){
                     case ACCESSORY_NONE:
@@ -3628,18 +4034,54 @@ int main(void) {
                         break;
 
                     case ACCESSORY_MEMPAK:
-                        printText("Please wait...", 9, -1, disp);
+                               switch(language)
+                        {
+                            default:
+                                printText("Please wait...", 9, -1, disp);
+                            break;
+
+                            case 1:
+                                printText("Por favor espera...", 9, -1, disp);
+                            break;
+                        }
                         if( format_mempak( 0 ) ) {
-                             printText("Error formatting!", 9, -1, disp);
+                              switch(language)
+                        {
+                            default:
+                                printText("Error formatting!", 9, -1, disp);
+                            break;
+
+                            case 1:
+                                printText("Error al formatear!", 9, -1, disp);
+                            break;
+                        }
                         }
                         else {
-                            drawShortInfoBox(disp, "         Done",0);
+                            switch(language)
+                        {
+                            default:
+                                drawShortInfoBox(disp, "         Done",0);
+                            break;
+
+                            case 1:
+                                drawShortInfoBox(disp, "        Hecho",0);
+                            break;
+                        }
                             input_mapping=abort_screen;
                         }
                         break;
 
                     case ACCESSORY_RUMBLEPAK:
-                        printText("Cannot format Rumblepak!", 9, -1, disp);
+                        switch(language)
+                        {
+                            default:
+                                printText("Cannot format Rumblepak!", 9, -1, disp);
+                            break;
+
+                            case 1:
+                                printText("Rumblepak insertado!", 9, -1, disp);
+                            break;
+                        }
                         break;
                     }
 
@@ -3651,13 +4093,31 @@ int main(void) {
                     drawBoxNumber(disp,2);
                     display_show(disp);
 
-                    printText("Mempak-Restore:", 9, 9, disp);
+                          switch(language)
+                        {
+                            default:
+                                printText("Mempak-Restore:", 9, 9, disp);
+                            break;
+
+                            case 1:
+                                printText("Restaurar Mempak:", 9, 9, disp);
+                            break;
+                        }
                     printText(" ", 9, -1, disp);
 
                     file_to_mpk(disp, rom_filename);
                     sleep(300);
 
-                    drawShortInfoBox(disp, "         Done",0);
+                    switch(language)
+                        {
+                            default:
+                                drawShortInfoBox(disp, "         Done",0);
+                            break;
+
+                            case 1:
+                                drawShortInfoBox(disp, "        Hecho",0);
+                            break;
+                        }
                     input_mapping=abort_screen;
 
                     display_show(disp);
@@ -3666,14 +4126,34 @@ int main(void) {
                     drawBoxNumber(disp,2);
                     display_show(disp);
 
-                    printText("Quick-Backup:", 9, 9, disp);
-                    printText(" ", 9, -1, disp);
-                    printText("Search...", 9, -1, disp);
+                      switch(language)
+                        {
+                            default:
+                                printText("Quick-Backup:", 9, 9, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("Searching...", 9, -1, disp);
+                            break;
+
+                            case 1:
+                                printText("Copia Rapida:", 9, 9, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("Buscando...", 9, -1, disp);
+                            break;
+                        }
 
                     mpk_to_file(disp, list[cursor].filename, 1); //quick
                     sleep(300);
 
-                    drawShortInfoBox(disp, "         Done",0);
+                    switch(language)
+                        {
+                            default:
+                                drawShortInfoBox(disp, "         Done",0);
+                            break;
+
+                            case 1:
+                                drawShortInfoBox(disp, "        Hecho",0);
+                            break;
+                        }
                     sleep(500);
                     input_mapping=abort_screen;
                 }
@@ -3861,25 +4341,46 @@ int main(void) {
             }
             else if(keys.c[0].Z){
                 if(input_mapping==file_manager){
-                    input_mapping=none;
 
                     drawBoxNumber(disp,2);
                     display_show(disp);
 
-                    printText("About: ", 9, 8, disp);
-                    printText(" ", 9, -1, disp);
-                    printText("ALT64: v0.1.8.6-cheat", 9, -1, disp);
-                    printText("by Saturnu", 9, -1, disp);
-                    printText(" ", 9, -1, disp);
-                    printText("Code engine by:", 9, -1, disp);
-                    printText("Jay Oster", 9, -1, disp);
-                    printText(" ", 9, -1, disp);
-                    printText("Thanks to:", 9, -1, disp);
-                    printText("Krikzz, Richard Weick", 9, -1, disp);
-                    printText("ChillyWilly", 9, -1, disp);
-                    printText("ShaunTaylor", 9, -1, disp);
-                    printText("Conle", 9, -1, disp);
-                    printText("Z: Controls page", 9, -1, disp);
+                    switch(language)
+                        {
+                            default:
+                                printText("About: ", 9, 8, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("ALT64: v0.1.8.6-cheat", 9, -1, disp);
+                                printText("by Saturnu", 9, -1, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("Code engine by:", 9, -1, disp);
+                                printText("Jay Oster", 9, -1, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("Thanks to:", 9, -1, disp);
+                                printText("Krikzz, Richard Weick", 9, -1, disp);
+                                printText("ChillyWilly", 9, -1, disp);
+                                printText("ShaunTaylor", 9, -1, disp);
+                                printText("Conle", 9, -1, disp);
+                                printText("Z: Controls page", 9, -1, disp);  
+                            break;
+
+                            case 1:
+                                printText("Informacion: ", 9, 8, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("ALT64: v0.1.8.6-cheat", 9, -1, disp);
+                                printText("por Saturnu", 9, -1, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("Motor de codigo por:", 9, -1, disp);
+                                printText("Jay Oster", 9, -1, disp);
+                                printText(" ", 9, -1, disp);
+                                printText("Gracias a:", 9, -1, disp);
+                                printText("Krikzz, Richard Weick", 9, -1, disp);
+                                printText("ChillyWilly", 9, -1, disp);
+                                printText("ShaunTaylor", 9, -1, disp);
+                                printText("Conle", 9, -1, disp);
+                                printText("Z: P. Controles", 9, -1, disp);  
+                            break;
+                        }
 
                     if(sound_on)
                         playSound(2);
@@ -3897,30 +4398,60 @@ int main(void) {
                     display_dir(list, cursor, page, MAX_LIST, count, disp);
                     drawBoxNumber(disp,13);
                     display_show(disp);
+                      switch(language)
+                        {
+                            default:
+                                printText("          - Controls -", 4, 4, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  L: Show mempak menu", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  Z: About screen", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  A: Start rom/directory", 4, -1, disp);
+                                printText("         mempak", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  B: Back/cancel", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  START: Start last rom", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  C-Left: Rom info/mempak", 4, -1, disp);
+                                printText("         content view", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  C-Right: Rom config creen", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  C-Up: View full filename", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  C-Down: Toplist 15", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  R: Delete file", 4, -1, disp);
+                            break;
 
-                    printText("          - Controls -", 4, 4, disp);
-                    printText(" ", 4, -1, disp);
-                    printText("  L: Show mempak menu", 4, -1, disp);
-                    printText(" ", 4, -1, disp);
-                    printText("  Z: About screen", 4, -1, disp);
-                    printText(" ", 4, -1, disp);
-                    printText("  A: Start rom/directory", 4, -1, disp);
-                    printText("         mempak", 4, -1, disp);
-                    printText(" ", 4, -1, disp);
-                    printText("  B: Back/cancel", 4, -1, disp);
-                    printText(" ", 4, -1, disp);
-                    printText("  START: Start last rom", 4, -1, disp);
-                    printText(" ", 4, -1, disp);
-                    printText("  C-Left: Rom info/mempak", 4, -1, disp);
-                    printText("         content view", 4, -1, disp);
-                    printText(" ", 4, -1, disp);
-                    printText("  C-Right: Rom config creen", 4, -1, disp);
-                    printText(" ", 4, -1, disp);
-                    printText("  C-Up: View full filename", 4, -1, disp);
-                    printText(" ", 4, -1, disp);
-                    printText("  C-Down: Toplist 15", 4, -1, disp);
-                    printText(" ", 4, -1, disp);
-                    printText("  R: Delete file", 4, -1, disp);
+                            case 1:
+                                printText("         - Controles -", 4, 4, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  L: Menu del Mempak", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  Z: Pantalla de info", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  A: Iniciar rom/directorio", 4, -1, disp);
+                                printText("         mempak", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  B: Atras/cancelar", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  START: Iniciar ultima rom", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  C-Left: Rom info/mempak", 4, -1, disp);
+                                printText("           ver contenido", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  C-Right: Config de la rom", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  C-Up: Ver nombre completo", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  C-Down: Toplist 15", 4, -1, disp);
+                                printText(" ", 4, -1, disp);
+                                printText("  R: Borrar archivo", 4, -1, disp);
+                            break;
+                        }
 
                     if(sound_on)
                         playSound(2);
@@ -4069,8 +4600,16 @@ int main(void) {
                             display_dir(list, cursor, page, MAX_LIST, count, disp);
 
                             display_show(disp);
+                            switch(language)
+                            {
+                                default:
+                                    drawShortInfoBox(disp, " L=Restore  R=Backup", 2);
+                                break;
 
-                            drawShortInfoBox(disp, " L=Restore  R=Backup", 2);
+                                case 1:
+                                    drawShortInfoBox(disp, " L=Restaurar  R=Copiar", 2);
+                                break;
+                            }
                             input_mapping=mpk_choice;
 
                             sprintf(rom_filename,"%s", name_file);
@@ -4135,7 +4674,16 @@ int main(void) {
 
                             while( !(disp = display_lock()) );
                             clearScreen(disp);
-                            drawShortInfoBox(disp, "    Playing MP3",0);
+                            switch(language)
+                            {
+                                default:
+                                    drawShortInfoBox(disp, "    Playing MP3",0);
+                                break;
+
+                                case 1:
+                                    drawShortInfoBox(disp, "Reproduciendo MP3",0);
+                                break;
+                            }
 
                             long long start = 0, end = 0, curr, pause = 0, samples;
                             int rate = 44100, last_rate = 44100, channels = 2;
@@ -4208,7 +4756,16 @@ int main(void) {
                     fatWriteFile(&cfg_file_data, 1);
                     sleep(200);
 
-                    drawShortInfoBox(disp, "         Done",0);
+                    switch(language)
+                        {
+                            default:
+                                drawShortInfoBox(disp, "         Done",0);
+                            break;
+
+                            case 1:
+                                drawShortInfoBox(disp, "        Hecho",0);
+                            break;
+                        }
                     toplist_reload=1;
 
                     input_mapping=abort_screen;
