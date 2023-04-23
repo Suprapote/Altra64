@@ -1,139 +1,48 @@
-# alt64
+# Altra64
+[![Build and release](https://github.com/ariahiro64/altra64/actions/workflows/build-release.yml/badge.svg)](https://github.com/ariahiro64/altra64/actions/workflows/build-release.yml)
+[![Build docker dev build image](https://github.com/ariahiro64/altra64/actions/workflows/docker-image.yml/badge.svg)](https://github.com/ariahiro64/altra64/actions/workflows/docker-image.yml)
 
 Alternative Everdrive64 menu
 
-    Kuroneko!
+`Altra64` is an open source menu for [Everdrive64](http://krikzz.com/) and ED64+<br>
+Based on [a fork of alt64](https://github.com/parasyte/alt64) which was originally written by saturnu, and released on the [Everdrive64 forum](http://krikzz.com/forum/index.php?topic=816.0).
 
-           :\     /;               _
-          ;  \___/  ;             ; ;
-         ,:-"'   `"-:.            / ;
-    _   /,---.   ,---.\   _     _; /
-    _:>((  |  ) (  |  ))<:_ ,-""_,"
-        \`````   `````/""""",-""
-         '-.._ v _..-'      )
-           / ___   ____,..  \
-          / /   | |   | ( \. \
-    ctr  / /    | |    | |  \ \
-         `"     `"     `"    `"
+## Setup
+1. Format your SD card to FAT32.
+2. Extract the contents of ALTRA64.zip into the root of your SD card.
+3. Change ALT64.ini to your hearts content.
+4. Add legally obtained ROMs.
+5. Insert the SD card into the ED64plus and enjoy!
 
-    nyannyannyannyannyannyannyannyannyannyannyannyannyannyannyannyannyan
-
-
-`alt64` is an open source menu for [Everdrive64](http://krikzz.com/). It was
-originally written by saturnu, and released on the
-[Everdrive64 forum](http://krikzz.com/forum/index.php?topic=816.0).
+## Controls
+```
+[L] - Opens MEMPAK menu
+      [B] - Abort
+      [A] - Backup
+      [R] - Format
+      [Z] - View Controller Pak
+[Z] - About Screen
+[A] - Start ROM / Open Directory / View MEMPAK
+[B] - Back / Cancel
+[START] - Start Last ROM
+[C-Left] - ROM Info / MEMPAK Content View
+[C-Right] - ROM Config Screen
+[C-Up] - View Full Filename
+[C-Down] - TOP 15 List
+[L+R] - Delete File
+```
 
 ## Building
+[Automated Builds Here](https://github.com/bakapear/altra64/actions)<br>
+[Docker Image](https://github.com/ariahiro64/altra64/pkgs/container/altra64)
 
-If you want to build the menu, you need an n64 toolchain. We'll use the
-toolchain recommended by libdragon, with some updated versions.
+```sh
+# Run in project root to build project:
+sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make
+# Output: bin/OS64P.v64
 
-### Dependencies
-
-* [libdragon](https://github.com/parasyte/libdragon)
-* [libmikmod-n64](https://github.com/parasyte/libmikmod-n64)
-* [libmad-n64](https://github.com/parasyte/libmad-n64)
-* [libyaml](http://pyyaml.org/wiki/LibYAML)
-
-### Build the Toolchain
-
-*You may skip this step if it's already installed.*
-
-Clone the `libdragon` repo and create a directory for the build.
-
-```bash
-$ git clone https://github.com/parasyte/libdragon.git
-$ mkdir libdragon/build_gcc
-$ cp libdragon/tools/build libdragon/build_gcc
-$ cd libdragon/build_gcc
+# Run in project root to clean project from build objects:
+sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make clean
 ```
 
-Modify the `build` script to set your installation path. Here is the default:
-
-```bash
-# EDIT THIS LINE TO CHANGE YOUR INSTALL PATH!
-export INSTALL_PATH=/usr/local/mips64-elf
-```
-
-Build it! This can take an hour or more.
-
-```bash
-$ ./build
-```
-
-### Configure your Environment
-
-Add the following environment variable to your `~/.bash_profile` or `~/.bashrc`
-Be sure to use the same path that you configured in the build script!
-
-```bash
-export N64_INST=/usr/local/mips64-elf
-```
-
-### Build `libdragon`
-
-Make sure you are in the `libdragon` top-level directory, and make sure `libpng`
-is installed:
-
-```bash
-$ make && make install
-$ make tools && make tools-install
-```
-
-### Build `libmikmod`
-
-Clone `libmikmod-n64` and build:
-
-```bash
-$ git clone https://github.com/parasyte/libmikmod-n64.git
-$ cd libmikmod-n64
-$ make
-$ make install
-```
-
-### Build `libmad-n64`
-
-Clone `libmad-n64` and build, be sure to set the path according to your
-toolchain installation path:
-
-```bash
-$ git clone https://github.com/parasyte/libmad-n64.git
-$ cd libmad-n64
-$ export PATH=$PATH:$(N64_INST)/bin
-$ CFLAGS="-march=vr4300 -mtune=vr4300 -mno-extern-sdata" \
-  LDFLAGS="-L$(N64_INST)/lib" LIBS="-lc -lnosys" \
-  ./configure --host=mips64-elf --disable-shared \
-  --prefix=$(N64_INST) --enable-speed --enable-fpm=mips
-$ make
-$ make install
-```
-
-### Build `libyaml`
-
-Download libyaml 0.1.6 and build, be sure to set the path according to your
-toolchain installation path:
-
-```bash
-$ hg clone https://bitbucket.org/xi/libyaml
-$ cd libyaml
-$ hg update 0.1.6
-$ ./bootstrap
-$ export PATH=$PATH:$(N64_INST)/bin
-$ CFLAGS="-std=gnu99 -march=vr4300 -mtune=vr4300" \
-  LDFLAGS="-L$(N64_INST)/lib -Tn64ld.x" \
-  LIBS="-ldragon -lc -ldragonsys -lnosys" \
-  ./configure --host=mips64-elf --prefix=$(N64_INST)
-$ make
-$ make install
-```
-
-### Build `alt64`
-
-Finally, we can clone `alt64` and build it!
-
-```bash
-$ git clone https://github.com/parasyte/alt64.git
-$ make
-```
-
-If it all worked, you will find `OS64P.v64` in the `alt64` top-level directory.
+### Big thanks to the countless people who make Altra64 possible!!! Enjoy!
