@@ -41,7 +41,7 @@ Based on [a fork of alt64](https://github.com/parasyte/alt64) which was original
 ```sh
 sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make
 ```
-# Output: bin/OS64P.v64
+Output: bin/OS64P.v64
 
 # Run in project root to clean project from build objects:
 ```sh
