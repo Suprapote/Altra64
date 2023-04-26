@@ -20,7 +20,7 @@ OBJS = $(PROG_NAME).o everdrive.o fat.o disk.o mem.o sys.o ini.o strlib.o utils.
 $(PROG_NAME).v64: $(PROG_NAME).elf test.dfs
 	$(OBJCOPY) $(PROG_NAME).elf $(PROG_NAME).bin -O binary
 	rm -f OS64P.v64
-	$(N64TOOL) -l 4M -t "EverDrive OS" -h ./header.ED64 -o OS64P.v64 $(PROG_NAME).bin -s 1M test.dfs
+	$(N64TOOL) -l 4M -t "ALT64 OS" -h ./header.ED64 -o OS64P.v64 $(PROG_NAME).bin -s 1M test.dfs
 	$(CHKSUM64PATH) OS64P.v64
 
 $(PROG_NAME).elf : $(OBJS)
