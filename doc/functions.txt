@@ -16,7 +16,7 @@ main()
 		evd_mmcSetDmaSwap(1);
 		
 		//dma read file to 0xb0000000 cartspace
-		diskRead();
+		diskWriteSD();
 		
 		//change key mapping
 		
