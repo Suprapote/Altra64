@@ -1,6 +1,6 @@
 # Altra64
-[![Build and release](https://github.com/bakapear/altra64/actions/workflows/build-release.yml/badge.svg)](https://github.com/bakapear/altra64/actions/workflows/build-release.yml)
-[![Build docker dev build image](https://github.com/bakapear/altra64/actions/workflows/docker-image.yml/badge.svg)](https://github.com/bakapear/altra64/actions/workflows/docker-image.yml)
+[![Build and release](https://github.com/ariahiro64/altra64/actions/workflows/build-release.yml/badge.svg)](https://github.com/ariahiro64/altra64/actions/workflows/build-release.yml)
+[![Build docker dev build image](https://github.com/ariahiro64/altra64/actions/workflows/docker-image.yml/badge.svg)](https://github.com/ariahiro64/altra64/actions/workflows/docker-image.yml)
 
 Alternative Everdrive64 menu
 
@@ -34,15 +34,18 @@ Based on [a fork of alt64](https://github.com/parasyte/alt64) which was original
 
 ## Building
 [Automated Builds Here](https://github.com/bakapear/altra64/actions)<br>
-[Docker Image](https://github.com/bakapear/altra64/pkgs/container/altra64)
+[Docker Image](https://github.com/ariahiro64/altra64/pkgs/container/altra64)
 
+
+Run in project root to build project:
 ```sh
-# Run in project root to build project:
-docker run --rm -v "$(pwd):/build" ghcr.io/bakapear/altra64:master make
-# Output: bin/OS64P.v64
+sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make
+```
+Output: bin/OS64P.v64
 
-# Run in project root to clean project from build objects:
-docker run --rm -v "$(pwd):/build" ghcr.io/bakapear/altra64:master make clean
+Run in project root to clean project from build objects:
+```sh
+sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make clean
 ```
 
 ### Big thanks to the countless people who make Altra64 possible!!! Enjoy!
