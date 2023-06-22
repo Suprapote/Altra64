@@ -111,7 +111,8 @@ typedef struct
     int hide_sysfolder;
     int sd_speed;
     int language;
-    int show_extension;
+    int save_backup;
+    int show_splash;
     char *splash_image;
 
 
@@ -123,7 +124,7 @@ unsigned int gBootCic = CIC_6102;
 static void *bg_buffer;
 void *__safe_bg_buffer;
 
-#define __get_buffer(x) __safe_buffer[(x)-1]
+#define __get_buffer(x) __safe_buffer[((int)x)-1]
 extern uint32_t __bitdepth;
 extern uint32_t __width;
 extern uint32_t __height;
@@ -244,8 +245,9 @@ u8 ext_type = 0;         //0=classic 1=org os
 u8 sd_speed = 1;         // 1=25Mhz 2=50Mhz
 u8 hide_sysfolder = 0;
 u8 language = 0;
+u8 save_backup = 1;
+u8 show_splash = 1;
 char *background_image;
-u8 show_extension = 0;
 char *splash_image;
 
 //mp3
@@ -655,17 +657,6 @@ void drawBox(short x, short y, short width, short height, display_context_t disp
 {
     x = x + (text_offset * 8);
 
-    /*
-     *    |Y
-     *    |  x0/y0
-     *    |
-     *    |
-     *    |          x1/y1
-     *    |_______________X
-     *
-     */
-
-    //                          X0 Y0  X1      Y1
     graphics_draw_line(disp, x, y, width + x, y, border_color_1);                   //A top left tp bottom right ok
     graphics_draw_line(disp, width + x, y, width + x, height + y, border_color_1);  //B top right to bottom right
     graphics_draw_line(disp, x, y, x, height + y, border_color_2);                  //C  //152-20
@@ -837,9 +828,13 @@ static int configHandler(void *user, const char *section, const char *name, cons
     {
         pconfig->language = atoi(value);
     }
-    else if (MATCH("ed64", "show_extension"))
+    else if(MATCH("ed64", "save_backup"))
     {
-        pconfig->show_extension = atoi(value);
+        pconfig->save_backup = atoi(value);
+    }
+    else if(MATCH("ed64", "show_splash"))
+    {
+        pconfig->show_splash = atoi(value);
     }
     else if (MATCH("ed64", "splash_image"))
     {
@@ -1283,7 +1278,7 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
                 romresult =
                 f_read (
                     &romfile,           /* [IN] File object */
-                    (void *)0xb0000000 + 0x1b410,  /* [OUT] Buffer to store read data */ //TODO: why is the offset this particular number
+                    (void *)0xb0200000 + 0x1b410,  /* [OUT] Buffer to store read data */ //TODO: why is the offset this particular number
                     romfsize,           /* [IN] Number of bytes to read */
                     &rombytesread       /* [OUT] Number of bytes read */
                 );
@@ -1324,7 +1319,7 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
         {
             //error
 
-            drawShortInfoBox(disp, "  ERROR: ROM > 512KB", 1);
+            drawShortInfoBox(disp, "  ERROR: ROM > 128KB", 1);
             input_mapping = abort_screen;
 
             return;
@@ -1333,7 +1328,7 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
         {
             printText(loadgb, 3, 4, disp);
 
-             FRESULT result;
+            FRESULT result;
             FIL file;
             UINT bytesread;
             result = f_open(&file, "/"ED64_FIRMWARE_PATH"/ultraMSX2.z64", FA_READ);
@@ -1357,7 +1352,7 @@ void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
                 romresult =
                 f_read (
                     &romfile,           /* [IN] File object */
-                    (void *)0xb0000000 + 0x2df48,  /* [OUT] Buffer to store read data */ //TODO: why is the offset this particular number
+                    (void *)0xb0200000 + 0x2df48,  /* [OUT] Buffer to store read data */ //TODO: why is the offset this particular number
                     romfsize,           /* [IN] Number of bytes to read */
                     &rombytesread       /* [OUT] Number of bytes read */
                 );
@@ -1447,6 +1442,19 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
     clearScreen(disp);
     display_show(disp);
     printText(loadgb, 3, 4, disp);
+
+    // Add the backup save flag file.
+	TCHAR backup_flag_path[32];
+	sprintf(backup_flag_path, "/"ED64_FIRMWARE_PATH"/%s/BACKUPSAVE.CFG", save_path);
+
+	FILINFO fnoba;
+	FRESULT fresult = f_stat(backup_flag_path, &fnoba);
+	if (fresult != FR_OK) 
+	{
+        FIL file;
+        f_open(&file, backup_flag_path, FA_WRITE | FA_CREATE_ALWAYS);
+		f_close(&file);
+	}
 
     TCHAR filename[MAX_SUPPORTED_PATH_LEN];
     sprintf(filename, "%s", buff);
@@ -1602,14 +1610,14 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
 
         if(result == FR_OK)
         {
-            printText("Rom loaded", 3, -1, disp);
+            printText(romloaded, 3, -1, disp);
 
             if (!fast)
             {
                 printText(" ", 3, -1, disp);
-                printText("(C-UP to activate cheats)", 3, -1, disp);
-                printText("(C-RIGHT to force menu tv mode)", 3, -1, disp);
-                printText("done: PRESS START", 3, -1, disp);
+                printText(cupactcheat, 3, -1, disp);
+                printText(crightv, 3, -1, disp);
+                printText(donepresstart, 3, -1, disp);
             }
             else
             {
@@ -1618,7 +1626,7 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
         }
         else
         {
-            printText("file open error", 3, -1, disp);
+            printText(filopenerror, 3, -1, disp);
         }
     }
 }
@@ -1693,7 +1701,7 @@ int backupSaveData(display_context_t disp)
             else
             {
                 TRACE(disp, "Save not required.");
-                printText("...ready", 3, -1, disp);
+                printText(readystr, 3, -1, disp);
                 display_show(disp);
                 return 1;
             }
@@ -1702,7 +1710,7 @@ int backupSaveData(display_context_t disp)
     else
     {
         TRACE(disp, "No previous ROM loaded!");
-        printText("...ready", 3, -1, disp);
+        printText(readystr, 3, -1, disp);
         display_show(disp);
         return 0;
     }
@@ -1723,7 +1731,7 @@ int backupSaveData(display_context_t disp)
     else
     {
         TRACE(disp, "no reset - save request");
-        printText("...done", 3, -1, disp);
+        printText(done3p, 3, -1, disp);
     }
     display_show(disp);
     return 1;
@@ -1772,34 +1780,34 @@ int saveTypeFromSd(display_context_t disp, char *rom_name, int stype)
     {
         switch(result)
         {
-        case FR_NOT_READY:
-        printText(errornoready, 11, -1, disp);
+         case FR_NOT_READY:
+        printText(errornoready, 3, -1, disp);
         break;
         case FR_NO_FILE:
-        printText(filenoexist, 11, -1, disp);
+        printText(filenoexist, 3, -1, disp);
         break;
         case FR_NO_PATH:
-        printText(pathnoexist, 11, -1, disp);
+        printText(pathnoexist, 3, -1, disp);
         break;
         case FR_INVALID_NAME:
-        printText(invalidname, 11, -1, disp);
+        printText(invalidname, 3, -1, disp);
         break;
         case FR_DENIED:
-        printText(operdenied, 11, -1, disp);
+        printText(operdenied, 3, -1, disp);
         break;
         case FR_EXIST:
-        printText(filealrrexist, 11, -1, disp);
+        printText(filealrrexist, 3, -1, disp);
         break;
         case FR_TIMEOUT:
-        printText(errtimeout, 11, -1, disp);
+        printText(errtimeout, 3, -1, disp);
         break;
         case FR_LOCKED:
-        printText(devicelocked, 11, -1, disp);
+        printText(devicelocked, 3, -1, disp);
         break;
         default:
         break;
         }
-        printText("No save found.", 3, -1, disp);
+        printText(nosavfund, 3, -1, disp);
         //todo: clear memory area
 
         return 0;
@@ -1807,11 +1815,11 @@ int saveTypeFromSd(display_context_t disp, char *rom_name, int stype)
 
     if (pushSaveToCart(stype, cartsave_data))
     {
-        printText("Transferred save data...", 3, -1, disp);
+        printText("transferred save data...", 3, -1, disp);
     }
     else
     {
-        printText("Error transfering save data", 3, -1, disp);
+        printText("error transfering save data", 3, -1, disp);
     }
 
     return 1;
@@ -1819,10 +1827,92 @@ int saveTypeFromSd(display_context_t disp, char *rom_name, int stype)
 
 int saveTypeToSd(display_context_t disp, char *rom_name, int stype)
 {
+    // Delete the backup save flag.
+	TCHAR backup_flag_path[32];
+	sprintf(backup_flag_path, "/"ED64_FIRMWARE_PATH"/%s/BACKUPSAVE.CFG", save_path);
+
+	FILINFO fflag;
+	FRESULT fresult = f_stat(backup_flag_path, &fflag);
+	if (fresult == FR_OK) 
+		f_unlink(backup_flag_path);
+
     //after reset create new savefile
     const char* save_type_extension = saveTypeToExtension(stype, ext_type);
     TCHAR fname[MAX_SUPPORTED_PATH_LEN];
 
+    if (save_backup == 1)
+    {
+        int save_count = 0;
+        int i;
+        char currsave[256];
+        char nextsave[256];
+        FRESULT result;
+        FILINFO fnoba;
+        printText("Finding unused save slot...", 3, -1, disp);
+        display_show(disp);
+        //check for non-numbered save file
+        sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%s", save_path, rom_name, save_type_extension);
+        result = f_stat(fname, &fnoba);
+        if (result != FR_OK)
+        {
+            //no saves found, create the first one
+            printText("No saves found. Creating save...", 3, -1, disp);
+            display_show(disp);
+            sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%s", save_path, rom_name, save_type_extension);
+            save_count = 1;
+        }
+        if (save_count == 0)
+        {
+            //check how many save files there are
+            for (i = 2; i < 5; i++)
+            {
+                sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%04x.%s", save_path, rom_name, i, save_type_extension);
+                result = f_stat(fname, &fnoba);
+                if(result != FR_OK)
+                {
+                    printText("Saves found. Backing up...", 3, -1, disp);
+                    display_show(disp);
+                    for (int j = i; j > 1; j--)
+                    {
+                        //todo: rename save j to save j+1
+                        sprintf(currsave, "/"ED64_FIRMWARE_PATH"/%s/%s.%04x.%s", save_path, rom_name, j, save_type_extension);
+                        sprintf(nextsave, "/"ED64_FIRMWARE_PATH"/%s/%s.%04x.%s", save_path, rom_name, j+1, save_type_extension);
+                        f_rename(currsave, nextsave);
+                    }
+                    save_count = 2;
+                    break;
+                }
+            }
+        }
+        if (save_count == 0)
+        {
+            // already 4 saves; delete save #4
+            printText("4 saves found. Deleting save #4...", 3, -1, disp);
+            display_show(disp);
+            char latestsave[256];
+            sprintf(latestsave, "/"ED64_FIRMWARE_PATH"/%s/%s.%04x.%s", save_path, rom_name, 4, save_type_extension);
+            f_unlink(latestsave);
+            printText("Renaming remaining saves...", 3, -1, disp);
+            display_show(disp);
+            for (i=2; i<4; i++)
+            {
+                //rename file[i] to file[i+1]
+                sprintf(currsave, "/"ED64_FIRMWARE_PATH"/%s/%s.%04x.%s", save_path, rom_name, i, save_type_extension);
+                sprintf(nextsave, "/"ED64_FIRMWARE_PATH"/%s/%s.%04x.%s", save_path, rom_name, i+1, save_type_extension);
+                f_rename(currsave, nextsave);
+            }
+            save_count = 3;
+        }
+
+        if (save_count != 1) {
+            //rename numberless file to save 2
+            sprintf(currsave, "/"ED64_FIRMWARE_PATH"/%s/%s.%s", save_path, rom_name, save_type_extension);
+            sprintf(nextsave, "/"ED64_FIRMWARE_PATH"/%s/%s.%04x.%s", save_path, rom_name, 2, save_type_extension);
+            f_rename(currsave, nextsave);
+        }
+        //below: save latest file as numberless
+       
+    }
     sprintf(fname, "/"ED64_FIRMWARE_PATH"/%s/%s.%s", save_path, rom_name, save_type_extension);
 
     int size = saveTypeToSize(stype); // int byte
@@ -1838,9 +1928,11 @@ int saveTypeToSd(display_context_t disp, char *rom_name, int stype)
         //for savegame
         uint8_t cartsave_data[size]; //TODO: bring back old initialisation if this doesn't work
 
+
+
         TRACEF(disp, "cartsave_data=%p", &cartsave_data);
 
-        printText(transfersavedat, 3, -1, disp);
+        printText("Transfering save data...", 3, -1, disp);
         if (getSaveFromCart(stype, cartsave_data))
         {
             UINT bw;
@@ -1852,13 +1944,22 @@ int saveTypeToSd(display_context_t disp, char *rom_name, int stype)
             );
             f_close(&file);
 
-            printText(ramarea2sd, 3, -1, disp);
+            if (bw == 0)
+			{
+				printText("File was blank.", 3, -1, disp);
+				f_unlink(fname);
+			}
+			else
+			{
+				printText("RAM area copied to SD card.", 3, -1, disp);
+			}
             return 1;
         }
         else
         {
             f_close(&file);
-            printText("Error saving game to SD", 3, -1, disp);
+            f_unlink(fname);
+            printText("Couldn't retrieve save from SRAM.", 3, -1, disp);
             return 0;
         }
     }
@@ -1928,7 +2029,8 @@ int readConfigFile(void)
             sd_speed = config.sd_speed;
             background_image = config.background_image;
             language = config.language;
-            show_extension = config.show_extension;
+            save_backup = config.save_backup;
+            show_splash = config.show_splash;
             splash_image = config.splash_image;
 
             return 1;
@@ -2332,7 +2434,7 @@ void bootRom(display_context_t disp, int silent)
         if (cheats_on)
         {
             gCheats = 1;
-            printText("try to load cheat-file...", 3, -1, disp);
+            printText(trloadchfile, 3, -1, disp);
 
             char cheat_filename[64];
             sprintf(cheat_filename, "/"ED64_FIRMWARE_PATH"/CHEATS/%s.yml", rom_filename);
@@ -2340,7 +2442,8 @@ void bootRom(display_context_t disp, int silent)
             int ok = readCheatFile(cheat_filename, cheat_lists);
             if (ok == 0)
             {
-                printText("cheats found...", 3, -1, disp);
+                printText(chsfund, 3, -1, disp);
+                sleep(600);
             }
             else
             {
@@ -2801,7 +2904,7 @@ void drawToplistBox(display_context_t disp, int line)
                         f_close(&file);
 
                         toplist[i][0] = (char)cfg_file_data[5];     //quality
-                        strcpy(toplist[i] + 1, cfg_file_data + 32); //fullpath
+                        strcpy(&toplist[i][1], cfg_file_data + 32); //fullpath //TODO: check correctness!
                         i++;
                     }
                 }
@@ -3907,7 +4010,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
             //rom start screen
             if (cheats_on == 0)
             {
-                printText("cheat system activated...", 3, -1, disp);
+                printText(cheatsysact, 3, -1, disp);
                 cheats_on = 1;
             }
             break;
@@ -4095,7 +4198,7 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
             if (force_tv != 0)
             {
-                printText("force tv mode...", 3, -1, disp);
+                printText(forcetvmd, 3, -1, disp);
             }
             break;
 
@@ -4661,6 +4764,9 @@ int main(void)
         int sj = evd_readReg(REG_CFG); // not sure if this is needed!
         int save_job = evd_readReg(REG_SAV_CFG); //TODO: or the firmware is V3
 
+        if (save_job != 0 && show_splash != 1)
+            fast_boot = 1;
+
         //not gamepads more or less the n64 hardware-controllers
         controller_init();
 
@@ -4713,6 +4819,7 @@ int main(void)
                 dirempty = "Dir empty...";
                 fnddb = "Found in db";
                 done = "         Done";
+                done3p = "...Done";
                 romloaded = "Rom loaded";
                 loadgb = "Loading ROM...";
                 loading = "      Loading...";
@@ -4794,7 +4901,7 @@ int main(void)
                 Startlastrom = "  START: Start last rom";
                 CLEFT = " C-left: Rom info/Mempak";
                 CLEFTVIEMPK = "         Content View";
-                CRIGHT = "C-right: rRom config creen";
+                CRIGHT = " C-right: Rom config creen";
                 CUP = "   C-up: View full filename";
                 CDOWN = " C-down: Toplist 15";
                 LplusR = "  R + L: Delete file";
@@ -4806,12 +4913,27 @@ int main(void)
                 filealrrexist = "ERROR: File already exists.";
                 errtimeout = "ERROR: Timeout.";
                 devicelocked = "ERROR: Device locked.";
+                readystr = "Ready.";
+                cheatsysact = "Cheat system activated...";
+                cupactcheat = "(C-UP to activate cheats)";
+                crightv = "(C-RIGHT to force menu TV mode)";
+                donepresstart = "Done: PRESS START";
+                filopenerror = "File open error";
+                nosavfund = "No save found.";
+                trssavedata = "Transferred save data...";
+                errtrssavedata = "Error transfering save data";
+                errsavSD = "Error saving game to SD";
+                errsavSDnocrfile = "Error saving game to SD, couldn't create file!";
+                trloadchfile = "Try to load cheat-file...";
+                chsfund = "Cheats found...";
+                forcetvmd = "Force TV mode...";
             break;
 
             case 1:
                 dirempty = "Directorio vacio...";
-                fnddb = "Encontrado en db";
+                fnddb = "Encontrado en BD";
                 done = "        Hecho";
+                done3p = "...Hecho";
                 romloaded = "Rom cargada";
                 loadgb = "Cargando ROM...";
                 loading = "     Cargando...";
@@ -4905,6 +5027,20 @@ int main(void)
                 filealrrexist = "ERROR: El archivo ya existe.";
                 errtimeout = "ERROR: Tiempo de espera excedido.";
                 devicelocked = "ERROR: Dispositivo bloqueado.";
+                readystr = "Listo.";
+                cheatsysact = "Sistema de trucos activado...";
+                cupactcheat = "(C-ARRIBA activar trucos)";
+                crightv = "(C-DERECHA forzar modo de TV)";
+                donepresstart = "Hecho: PULSA START";
+                filopenerror = "Error al abrir el archivo";
+                nosavfund = "Partida no encontrada.";
+                trssavedata = "Datos transferidos...";
+                errtrssavedata = "Error transfiriendo datos";
+                errsavSD = "Error guardando en la SD";
+                errsavSDnocrfile = "Error, no se puede crear el archivo!";
+                trloadchfile = "Intentando cargar los trucos...";
+                chsfund = "Trucos encontrados...";
+                forcetvmd = "Forzar modo de TV...";
             break;
         }
 
@@ -4928,6 +5064,15 @@ int main(void)
         //Grab a render buffer
         while (!(disp = display_lock()))
             ;
+            
+		TCHAR backup_flag_path[32];
+		sprintf(backup_flag_path, "/"ED64_FIRMWARE_PATH"/%s/BACKUPSAVE.CFG", save_path);
+
+		FILINFO fnoba;
+		FRESULT fresult = f_stat(backup_flag_path, &fnoba);
+		if (fresult == FR_OK)
+			fast_boot = 1;
+
         //backgrounds from ramfs/libdragonfs
 
         char splash_path[64];
@@ -4998,10 +5143,12 @@ int main(void)
 
         display_show(disp); //new
 
-        backupSaveData(disp);
-
-        while (!(disp = display_lock()))
-            ;
+        if (fast_boot)
+		{
+			backupSaveData(disp);
+			while (!(disp = display_lock()))
+				;
+		}
 
         sprintf(pwd, "%s", "/");
         readSDcard(disp, "/");

@@ -2,7 +2,6 @@
 #include "types.h"
 #include "debug.h"
 
-
 short int gCursorX;
 short int gCursorY;
 

@@ -27,7 +27,7 @@ static volatile struct _PI_regs_s * const _PI_regs = (struct _PI_regs_s *)0xa460
 
 int get_cic_save(char *cartid, int *cic, int *save) {
     // variables
-    int NUM_CARTS = 159;
+    int NUM_CARTS = 177;
     int i;
 
     //TODO: add games http://www.nesworld.com/article.php?system=n64&data=n64releaselist & https://onedrive.live.com/redir?resid=3E0FF504D0091341!182&authkey=!AMZAzZl-G-Y2fDo&ithint=file%2cxlsx
@@ -45,14 +45,16 @@ int get_cic_save(char *cartid, int *cic, int *save) {
         "W2", "W4", "WL", "WR", "WU", "WX", "XO", "YS", "YW", "ZL",
         "ZS", "AB", "BN", "CG", "CX", "CZ", "D6", "DR", "DZ", "OH",
         "TB", "TC", "VB", "WI", "4W", "AG", "AY", "DA", "D2", "3D",
-        "F2", "SI", "HP", "EV", "MG", "GU", "SA", "VP", "A2", "WC", 
-        "GF", "TR", "TX", "HA", "CA", "HB", "SE", "DD", "DD", "DD",
-        "DD", "DD", "DD", "DD", "DD", "AF", "PT", "PY", "MZ"
+        "F2", "SI", "HP", "EV", "MG", "GU", "SA", "VP", "A2", "WC",
+        "GF", "TR", "TX", "CA", "HB", "SE", "DD", "DD", "DD", "DD",
+        "DD", "DD", "DD", "DD", "AF", "PT", "PY", "MZ", "GL", "JG",
+        "SB", "PM", "R7", "OS", "O2", "HF", "FG", "G6", "IM", "IB",
+        "LL", "MS", "UB", "RH", "T3", "T6", "IR"
     };
 
     // Banjo-Tooie (B7) -> if not using Ultra CIC set to sram, because the crack converts ek16/eep (4) -> sram (1)
     int saveTypes[] = {
-        0x02, 0x01, 0x05, 0x01, 0x03, 0x01, 0x04, 0x03, 0x03, 0x03,
+        0x02, 0x03, 0x05, 0x01, 0x03, 0x01, 0x04, 0x03, 0x03, 0x03,
         0x03, 0x03, 0x03, 0x05, 0x03, 0x05, 0x03, 0x03, 0x03, 0x04,
         0x05, 0x04, 0x05, 0x03, 0x03, 0x03, 0x03, 0x04, 0x03, 0x03,
         0x04, 0x03, 0x03, 0x01, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
@@ -63,11 +65,13 @@ int get_cic_save(char *cartid, int *cic, int *save) {
         0x01, 0x01, 0x03, 0x04, 0x03, 0x03, 0x03, 0x03, 0x05, 0x03,
         0x03, 0x03, 0x05, 0x01, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
         0x01, 0x05, 0x03, 0x03, 0x03, 0x01, 0x03, 0x04, 0x01, 0x01,
-        0x05, 0x03, 0x03, 0x03, 0x03, 0x04, 0x01, 0x03, 0x01, 0x03,
+        0x05, 0x03, 0x03, 0x03, 0x03, 0x04, 0x04, 0x03, 0x01, 0x03,
         0x03, 0x03, 0x01, 0x01, 0x00, 0x03, 0x01, 0x01, 0x04, 0x04,
-        0x04, 0x05, 0x03, 0x04, 0x03, 0x03, 0x03, 0x01, 0x01, 0x03,
-        0x03, 0x03, 0x03, 0x03, 0X00, 0x03, 0x03, 0x01, 0x01, 0x01,
-        0x01, 0x01, 0x01, 0x01, 0x01, 0x05, 0x03, 0x03, 0x03
+        0x04, 0x01, 0x03, 0x04, 0x03, 0x03, 0x03, 0x01, 0x01, 0x03,
+        0x03, 0x03, 0x03, 0X03, 0x03, 0x03, 0x01, 0x01, 0x01, 0x01,
+        0x01, 0x01, 0x01, 0x01, 0x05, 0x03, 0x03, 0x03, 0x03, 0x01,
+        0x03, 0x03, 0x04, 0X03, 0X03, 0x03, 0x03, 0x01, 0x04, 0x01,
+        0x03, 0X03, 0x04, 0x05, 0x01, 0x03, 0x03
     };
 
     // Banjo-Tooie (B7) -> if not using Ultra CIC set to 2 instead of 5
@@ -86,8 +90,10 @@ int get_cic_save(char *cartid, int *cic, int *save) {
         0x05, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
         0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
         0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
-        0x02, 0x02, 0x02, 0X04, 0X04, 0X04, 0X04, 0x07, 0x07, 0x07,
-        0x07, 0x07, 0x07, 0x07, 0x07, 0x02, 0x02, 0x07, 0x02
+        0x02, 0x02, 0x02, 0X04, 0X04, 0X04, 0x07, 0x07, 0x07, 0x07,
+        0x07, 0x07, 0x07, 0x07, 0x02, 0x02, 0x07, 0x02, 0x02, 0x02,
+        0x02, 0x02, 0x02, 0X02, 0X02, 0X02, 0x02, 0x02, 0x02, 0x02,
+        0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02
     };
 
     // search for cartid
@@ -143,7 +149,7 @@ int saveTypeToSize(int type) {
     switch(type) {
         case 0: return 0; 					break;
         case 1: return SAVE_SIZE_SRAM; 		break;
-        case 2: return SAVE_SIZE_SRAM96;	break;
+        case 2: return SAVE_SIZE_SRAM128;	break;
         case 3: return SAVE_SIZE_EEP4k;		break;
         case 4: return SAVE_SIZE_EEP16k; 	break;
         case 5: return SAVE_SIZE_FLASH; 	break;
@@ -154,7 +160,7 @@ int saveTypeToSize(int type) {
 /*
 #define SAVE_TYPE_OFF 0
 #define SAVE_TYPE_SRAM 1
-#define SAVE_TYPE_SRAM96 2
+#define SAVE_TYPE_SRAM128 2
 #define SAVE_TYPE_EEP4k 3
 #define SAVE_TYPE_EEP16k 4
 #define SAVE_TYPE_FLASH 5
@@ -168,7 +174,7 @@ int getSaveFromCart(int stype, uint8_t *buffer) {
     switch(stype) {
         case 0: return 0;
         case 1: ret = getSRAM32(buffer);	break;
-        case 2: ret = getSRAM96(buffer);   break;
+        case 2: ret = getSRAM128(buffer);   break;
         case 3: ret = getEeprom4k(buffer);  break;
         case 4: ret = getEeprom16k(buffer); break;
         case 5: ret = getFlashRAM(buffer);  break;
@@ -186,7 +192,7 @@ int pushSaveToCart(int stype, uint8_t *buffer){
     switch(stype) {
         case 0: return 0;
         case 1: ret = setSRAM32(buffer);	break;
-        case 2: ret = setSRAM96(buffer);   break;
+        case 2: ret = setSRAM128(buffer);   break;
         case 3: ret = setEeprom4k(buffer);  break;
         case 4: ret = setEeprom16k(buffer); break;
         case 5: ret = setFlashRAM(buffer);  break;
@@ -231,8 +237,8 @@ int getSRAM32(  uint8_t *buffer) {
 }
 
 //TODO: is this now 96k?
-int getSRAM96( uint8_t *buffer) {
-    return getSRAM(buffer, SAVE_SIZE_SRAM96);
+int getSRAM128( uint8_t *buffer) {
+    return getSRAM(buffer, SAVE_SIZE_SRAM128);
 }
 
 
@@ -259,11 +265,11 @@ int getEeprom16k(  uint8_t *buffer){
 }
 
 int getFlashRAM( uint8_t *buffer){
-    evd_setSaveType(SAVE_TYPE_SRAM96); //2
+    evd_setSaveType(SAVE_TYPE_SRAM128); //2
     sleep(FF_MAX_SS);
 
-    int s = getSRAM(buffer, SAVE_SIZE_SRAM96);
-    data_cache_hit_writeback_invalidate(buffer, SAVE_SIZE_SRAM96);
+    int s = getSRAM(buffer, SAVE_SIZE_SRAM128);
+    data_cache_hit_writeback_invalidate(buffer, SAVE_SIZE_SRAM128);
 
     sleep(FF_MAX_SS);
     evd_setSaveType(SAVE_TYPE_FLASH); //5
@@ -300,8 +306,8 @@ int setSRAM32( uint8_t *buffer){
     return setSRAM(buffer, SAVE_SIZE_SRAM);
 }
 
-int setSRAM96( uint8_t *buffer){
-    return setSRAM(buffer, SAVE_SIZE_SRAM96);
+int setSRAM128( uint8_t *buffer){
+    return setSRAM(buffer, SAVE_SIZE_SRAM128);
 }
 
 
@@ -330,11 +336,11 @@ int setEeprom16k(uint8_t *buffer){
 
 //isn't working nor finished
 int setFlashRAM(uint8_t *buffer){
-    evd_setSaveType(SAVE_TYPE_SRAM96); //2
+    evd_setSaveType(SAVE_TYPE_SRAM128); //2
     sleep(FF_MAX_SS);
 
-    int s = setSRAM(buffer, SAVE_SIZE_SRAM96);
-    data_cache_hit_writeback_invalidate(buffer,SAVE_SIZE_SRAM96);
+    int s = setSRAM(buffer, SAVE_SIZE_SRAM128);
+    data_cache_hit_writeback_invalidate(buffer,SAVE_SIZE_SRAM128);
 
     sleep(FF_MAX_SS);
     evd_setSaveType(SAVE_TYPE_FLASH); //5
