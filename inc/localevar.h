@@ -9,6 +9,7 @@ char *plgmp3;
 char *savemem;
 char *save32;
 char *save128;
+char *save768;
 char *save4k;
 char *save16k;
 char *saveflash;
