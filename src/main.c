@@ -1974,7 +1974,7 @@ int saveTypeToSd(display_context_t disp, char *rom_name, int stype)
 int readConfigFile(void)
 {
     TCHAR filename[MAX_SUPPORTED_PATH_LEN];
-    sprintf(filename, "/"ED64_FIRMWARE_PATH"/ALT64.INI");
+    sprintf(filename, "/"ED64_FIRMWARE_PATH"/ALTRA64.INI");
 
     FRESULT result;
     FIL file;
@@ -2693,7 +2693,7 @@ void alterRomConfig(int type, int mode)
 
     //save
     u8 min_save = 0;
-    u8 max_save = 5;
+    u8 max_save = 6;
 
     //tv-type
     u8 min_tv = 0;
@@ -3093,6 +3093,9 @@ void drawRomConfigBox(display_context_t disp, int line)
         break;
     case 5:
         printText(saveflash, 9, -1, disp);
+        break;
+    case 6:
+        printText(save768, 9, -1, disp);
         break;
     default:
         break;
@@ -4825,11 +4828,12 @@ int main(void)
                 loading = "      Loading...";
                 plgmp3 = "    Playing MP3";
                 savemem = "    Save: Off/Mempak";
-                save32 = "    Save: Sram 32";
-                save128 = "    Save: Sram 128";
-                save4k = "    Save: Eeprom 4k";
-                save16k = "    Save: Eeprom 16k";
-                saveflash = "    Save: Flashram";
+                save32 = "    Save: SRAM 32";
+                save128 = "    Save: SRAM 128";
+                save768 = "    Save: SRAM 768";
+                save4k = "    Save: EEPROM 4K";
+                save16k = "    Save: EEPROM 16K";
+                saveflash = "    Save: FLASHRAM";
                 OpComsucc = "Operation completed succesfully...";
                 mpksub = "Mempak-Subsystem:";
                 backnew = "  A: Backup - new";
@@ -4893,18 +4897,18 @@ int main(void)
                 cheatfound = "    Cheats found...";
                 emunofound = "  Emulator not found";
                 controlsmenucon = "          - Controls -";
-                showmpkmenu = " L: Show mempak menu";
-                aboutscreen = " Z: About screen";
-                Astartromdirectory = "A: Start rom/directory";
+                showmpkmenu = " (L): Show mempak menu";
+                aboutscreen = " (Z): About screen";
+                Astartromdirectory = "(A): Start rom/directory";
                 Amempak = "         mempak";
-                Bbackcancel = " B: Back/Cancel";
-                Startlastrom = "  START: Start last rom";
-                CLEFT = " C-left: Rom info/Mempak";
+                Bbackcancel = " (B): Back/Cancel";
+                Startlastrom = "  (START): Start last rom";
+                CLEFT = " (C-Left): Rom info/Mempak";
                 CLEFTVIEMPK = "         Content View";
-                CRIGHT = " C-right: Rom config creen";
-                CUP = "   C-up: View full filename";
-                CDOWN = " C-down: Toplist 15";
-                LplusR = "  R + L: Delete file";
+                CRIGHT = " (C-Right): Rom config creen";
+                CUP = "   (C-Up): View full filename";
+                CDOWN = " (C-Down): Toplist 15";
+                LplusR = "  (R) + (L): Delete file";
                 errornoready = "ERROR: Not ready.";
                 filenoexist = "ERROR: File doesn't exist.";
                 pathnoexist = "ERROR: Path doesn't exist.";
@@ -4939,11 +4943,12 @@ int main(void)
                 loading = "     Cargando...";
                 plgmp3 = "  Reproduciendo MP3";
                 savemem = "Guardado: Off/Mempak";
-                save32 = "Guardado: Sram 32";
-                save128 = "Guardado: Sram 128";
-                save4k = "Guardado: Eeprom 4k";
-                save16k = "Guardado: Eeprom 16k";
-                saveflash = "Guardado: Flashram";
+                save32 = "Guardado: SRAM 32";
+                save128 = "Guardado: SRAM 128";
+                save768 = "Guardado: SRAM 768";
+                save4k = "Guardado: EEPROM 4K";
+                save16k = "Guardado: EEPROM 16K";
+                saveflash = "Guardado: FLASHRAM";
                 OpComsucc = "Operacion completada exitosamente...";
                 mpksub = "Subsistema Mempak:";
                 backnew = "  A: Copiar contenido";
@@ -5007,18 +5012,18 @@ int main(void)
                 cheatfound = " Trucos encontrados...";
                 emunofound = "Emulador no encontrado";
                 controlsmenucon = "         - Controles -";
-                showmpkmenu = " L: Ver menu del mempak ";
-                aboutscreen = " Z: Informacion";
-                Astartromdirectory = "A: Iniciar rom/directorio";
+                showmpkmenu = " (L): Ver menu del mempak ";
+                aboutscreen = " (Z): Informacion";
+                Astartromdirectory = "(A): Iniciar rom/directorio";
                 Amempak = "       mempak";
-                Bbackcancel = " B: Volver/cancelar";
-                Startlastrom = " START: Iniciar la ultima rom";
-                CLEFT = " C-izquierda: Rom info/Mempak";
+                Bbackcancel = " (B): Volver/cancelar";
+                Startlastrom = " (START): Iniciar la ultima rom";
+                CLEFT = " (C-Izquierda): Rom info/Mempak";
                 CLEFTVIEMPK = "         Ver contenido";
-                CRIGHT = "C-derecha: Config. de la Rom";
-                CUP = " C-arriba: Ver nombre entero";
-                CDOWN = " C-abajo: Toplist 15";
-                LplusR = "  R + L: Borrar archivo";
+                CRIGHT = "(C-Derecha): Config. de la Rom";
+                CUP = " (C-Arriba): Ver nombre entero";
+                CDOWN = " (C-Abajo): Toplist 15";
+                LplusR = "  (R) + (L): Borrar archivo";
                 errornoready = "ERROR: No listo.";
                 filenoexist = "ERROR: El archivo no existe.";
                 pathnoexist = "ERROR: El directorio no existe.";

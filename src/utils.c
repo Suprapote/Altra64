@@ -127,6 +127,7 @@ const char* saveTypeToExtension(int type, int etype) {
             case 3:  str = "e4k";  break;
             case 4:  str = "e16"; break;
             case 5:  str = "fla"; break;
+            case 6:  str = "768"; break;
             default: str = "sav";
         }
     }
@@ -138,6 +139,7 @@ const char* saveTypeToExtension(int type, int etype) {
             case 3:  str = "eep";  break;
             case 4:  str = "eep"; break;
             case 5:  str = "fla"; break;
+            case 6:  str = "sra"; break;
             default: str = "sav";
         }
     }
@@ -153,6 +155,7 @@ int saveTypeToSize(int type) {
         case 3: return SAVE_SIZE_EEP4k;		break;
         case 4: return SAVE_SIZE_EEP16k; 	break;
         case 5: return SAVE_SIZE_FLASH; 	break;
+        case 6: return SAVE_SIZE_SRAM768;	break;
         default: return 0;
     }
 }
@@ -178,6 +181,7 @@ int getSaveFromCart(int stype, uint8_t *buffer) {
         case 3: ret = getEeprom4k(buffer);  break;
         case 4: ret = getEeprom16k(buffer); break;
         case 5: ret = getFlashRAM(buffer);  break;
+        case 6: ret = getSRAM768(buffer);   break;
         default: return 0;
     }
 
@@ -196,6 +200,7 @@ int pushSaveToCart(int stype, uint8_t *buffer){
         case 3: ret = setEeprom4k(buffer);  break;
         case 4: ret = setEeprom16k(buffer); break;
         case 5: ret = setFlashRAM(buffer);  break;
+        case 6: ret = setSRAM768(buffer);   break;
         default: return 0;
     }
 
@@ -239,6 +244,10 @@ int getSRAM32(  uint8_t *buffer) {
 //TODO: is this now 96k?
 int getSRAM128( uint8_t *buffer) {
     return getSRAM(buffer, SAVE_SIZE_SRAM128);
+}
+
+int getSRAM768( uint8_t *buffer) {
+    return getSRAM(buffer, SAVE_SIZE_SRAM768);
 }
 
 
@@ -310,6 +319,9 @@ int setSRAM128( uint8_t *buffer){
     return setSRAM(buffer, SAVE_SIZE_SRAM128);
 }
 
+int setSRAM768( uint8_t *buffer) {
+    return setSRAM(buffer, SAVE_SIZE_SRAM768);
+}
 
 //working hurray :D
 int setEeprom4k( uint8_t *buffer){
