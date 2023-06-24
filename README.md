@@ -4,7 +4,7 @@
 
 Alternative Everdrive64 menu
 
-`Altra64` is an open source menu for [Everdrive64](http://krikzz.com/) and ED64+<br>
+`Altra64` is an open source menu for [Everdrive64](http://krikzz.com/) and [ED64+](http://ed64p.com/)<br>
 Based on [a fork of alt64](https://github.com/parasyte/alt64) which was originally written by saturnu, and released on the [Everdrive64 forum](http://krikzz.com/forum/index.php?topic=816.0).
 
 ## Setup
