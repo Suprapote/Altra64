@@ -1436,6 +1436,69 @@ void loadnesrom(display_context_t disp, TCHAR *rom_path)
 }
 
 
+void loadsnesrom(display_context_t disp, TCHAR *rom_path)
+{
+    printText(loadgb, 3, 4, disp);
+    FRESULT result;
+    FIL emufile;
+    UINT emubytesread;
+    result = f_open(&emufile, "/"ED64_FIRMWARE_PATH"/sodium64.z64", FA_READ);
+
+    if (result == FR_OK)
+    {
+        int emufsize = f_size(&emufile);
+        //load nes emulator
+        result =
+        f_read (
+            &emufile,        /* [IN] File object */
+            (void *)0xb0000000,  /* [OUT] Buffer to store read data */
+            emufsize,         /* [IN] Number of bytes to read */
+            &emubytesread    /* [OUT] Number of bytes read */
+        );
+
+        f_close(&emufile);
+
+        //load snes rom
+        FIL romfile;
+        UINT rombytesread;
+        result = f_open(&romfile, rom_path, FA_READ);
+
+        if (result == FR_OK)
+        {
+            int romfsize = f_size(&romfile);
+            uint32_t Offset = 0x104000;
+            
+            // Check if there is a header that needs to be removed.
+            if ((romfsize & 0x3FF) == 0x200) {
+                Offset -= 0x200;
+            }
+
+            result =
+            f_read (
+                &romfile,        /* [IN] File object */
+                (void *)0xb0000000 + Offset,  /* [OUT] Buffer to store read data */
+                romfsize,         /* [IN] Number of bytes to read */
+                &rombytesread    /* [OUT] Number of bytes read */
+            );
+
+            f_close(&romfile);
+
+            boot_cic = CIC_6102;
+            boot_save = 2; //SRAM
+            force_tv = 1;  //no force
+            cheats_on = 0; //cheats off
+            checksum_fix_on = 0;
+
+            bootRom(disp, 1);
+        }
+        
+    }
+    else
+    {
+        drawShortInfoBox(disp, emunofound, 1);
+    }
+}
+
 //load a z64/v64/n64 rom to the sdram
 void loadrom(display_context_t disp, u8 *buff, int fast)
 {
@@ -3366,8 +3429,10 @@ void loadFile(display_context_t disp)
         ft = 7;
     else if (!strcmp(extension, "GBC"))
         ft = 8;
+    else if (!strcmp(extension, "SMC") || !strcmp(extension, "SFC"))
+        ft = 9;
 
-    if (ft != 8 || ft != 2)
+    if (ft != 9 || ft != 2)
     {
         while (!(disp = display_lock()))
             ;
@@ -3478,6 +3543,10 @@ void loadFile(display_context_t disp)
 
     case 8:
         loadgbcrom(disp, name_file);
+        display_show(disp);
+        break;
+    case 9:
+        loadsnesrom(disp, name_file);
         display_show(disp);
         break;
 
