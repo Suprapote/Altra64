@@ -52,28 +52,7 @@
 
 #include "localevar.h"
 
-#ifdef USE_TRUETYPE
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"
-
 #define MAX_LIST 20
-
-struct glyph
-{
-    int xoff;
-    int yoff;
-    int adv;
-    int lsb;
-    float scale;
-    unsigned int color;
-    unsigned char *alpha;
-    sprite_t sprite;
-};
-typedef struct glyph glyph_t;
-
-glyph_t sans[96];
-glyph_t serif[96];
-#endif
 
 typedef struct
 {
@@ -1302,6 +1281,7 @@ void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be me
         drawShortInfoBox(disp, emunofound, 1);
     }
 }
+
 void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
 {
 
@@ -1447,7 +1427,7 @@ void loadsnesrom(display_context_t disp, TCHAR *rom_path)
     if (result == FR_OK)
     {
         int emufsize = f_size(&emufile);
-        //load nes emulator
+        //load gb emulator
         result =
         f_read (
             &emufile,        /* [IN] File object */
@@ -1458,7 +1438,7 @@ void loadsnesrom(display_context_t disp, TCHAR *rom_path)
 
         f_close(&emufile);
 
-        //load snes rom
+        //load gb rom
         FIL romfile;
         UINT rombytesread;
         result = f_open(&romfile, rom_path, FA_READ);
@@ -1467,11 +1447,6 @@ void loadsnesrom(display_context_t disp, TCHAR *rom_path)
         {
             int romfsize = f_size(&romfile);
             uint32_t Offset = 0x104000;
-            
-            // Check if there is a header that needs to be removed.
-            if ((romfsize & 0x3FF) == 0x200) {
-                Offset -= 0x200;
-            }
 
             result =
             f_read (
@@ -1481,23 +1456,28 @@ void loadsnesrom(display_context_t disp, TCHAR *rom_path)
                 &rombytesread    /* [OUT] Number of bytes read */
             );
 
+            // Check if there is a header that needs to be removed.
+            if ((romfsize & 0x3FF) == 0x200) {
+                Offset -= 0x200;
+            }
+
             f_close(&romfile);
 
             boot_cic = CIC_6102;
-            boot_save = 2; //SRAM
-            force_tv = 1;  //no force
+            boot_save = 2; //flash
+            force_tv = 0;  //no force
             cheats_on = 0; //cheats off
             checksum_fix_on = 0;
 
             bootRom(disp, 1);
         }
-        
     }
     else
     {
         drawShortInfoBox(disp, emunofound, 1);
     }
 }
+
 
 //load a z64/v64/n64 rom to the sdram
 void loadrom(display_context_t disp, u8 *buff, int fast)
@@ -1531,7 +1511,7 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
     {
         int swapped = 0;
         int headerfsize = 512; //rom-headersize 4096 but the bootcode is not needed
-        unsigned char headerdata[headerfsize]; //1*512
+        unsigned char headerdata[headerfsize]; 
         int fsize = f_size(&file);
         int fsizeMB = fsize /1048576; //Bytes in a MB
 
@@ -3460,8 +3440,6 @@ void loadFile(display_context_t disp)
                     &file           /* [IN] File object */
                   );
 
-
-
                   f_close(&file);
 
                 if (result == FR_OK)
@@ -3486,6 +3464,17 @@ void loadFile(display_context_t disp)
                 TRACE(disp, "Couldnt Open file");
             }
 
+        }
+        else
+        {
+            //read rom_config data
+            readRomConfig(disp, rom_filename, name_file);
+
+            loadrom(disp, name_file, 1);
+            display_show(disp);
+
+            //rom loaded mapping
+            input_mapping = rom_loaded;
         }
         break;
     case 2:
@@ -3840,13 +3829,13 @@ void handleInput(display_context_t disp, sprite_t *contr)
                     int fsize = f_size(&file) + 1; //extra char needed for null terminator '/0'
                     uint8_t lastrom_cfg_data[fsize];
 
-                    // result =
-                    // f_read (
-                    //     &file,        /* [IN] File object */
-                    //     lastrom_cfg_data,  /* [OUT] Buffer to store read data */
-                    //     fsize,         /* [IN] Number of bytes to read */
-                    //     &bytesread    /* [OUT] Number of bytes read */
-                    // );
+                    //result =
+                    //f_read (
+                    //    &file,        /* [IN] File object */
+                    //    lastrom_cfg_data,  /* [OUT] Buffer to store read data */
+                    //    fsize,         /* [IN] Number of bytes to read */
+                    //    &bytesread    /* [OUT] Number of bytes read */
+                    //);
 
                     f_gets(lastrom_cfg_data, fsize, &file);
 
@@ -3952,6 +3941,8 @@ void handleInput(display_context_t disp, sprite_t *contr)
 
             printText(mpksub, 9, 9, disp);
             printText(" ", 9, -1, disp);
+            printText(" ", 9, -1, disp);
+            printText(viewmpk, 9, -1, disp);
             printText(" ", 9, -1, disp);
             printText(backnew, 9, -1, disp); //set mapping 3
             printText(" ", 9, -1, disp);
@@ -4417,6 +4408,15 @@ void handleInput(display_context_t disp, sprite_t *contr)
                 break;
 
             case mempak_menu:
+                while (!(disp = display_lock()));
+                if (sound_on)
+                    playSound(2);
+
+                drawBoxNumber(disp, 4);
+                display_show(disp);
+                view_mpk(disp);
+
+                input_mapping = abort_screen;
             break;
 
           case control_screen:
@@ -4837,8 +4837,9 @@ int main(void)
         int save_job = evd_readReg(REG_SAV_CFG); //TODO: or the firmware is V3
 
         if (save_job != 0 && show_splash != 1)
+        {
             fast_boot = 1;
-
+        }
         //not gamepads more or less the n64 hardware-controllers
         controller_init();
 
@@ -4905,14 +4906,15 @@ int main(void)
                 saveflash = "    Save: FLASHRAM";
                 OpComsucc = "Operation completed succesfully...";
                 mpksub = "Mempak-Subsystem:";
-                backnew = "  A: Backup - new";
-                formatt = "  R: Format";
-                abortmen = "  B: Abort";
+                viewmpk = "  (Z): View content";
+                backnew = "  (A): Backup - new";
+                formatt = "  (R): Format";
+                abortmen = "  (B): Abort";
                 restoreback = " L=Restore  R=Backup";
                 confreq = "Confirmation required:";
                 aresure = "    Are you sure?";
-                cupcont = "    C-UP Continue ";
-                cancelmenu = "      B Cancel";
+                cupcont = "  (C-UP): Continue ";
+                cancelmenu = "    (B): Cancel";
                 romconfig = "Rom configuration:";
                 updatelastgamerecord = "Updating last played game record...";
                 ramarea2sd = "RAM area copied to SD card.";
@@ -4936,16 +4938,16 @@ int main(void)
                 ratrare = "  Rating: Rare";
                 ratepic = "  Rating: Epic";
                 ratlegend = "  Rating: Legendary";
-                bcancel = "B: Cancel";
+                bcancel = "(B): Cancel";
                 countrydef = " Country: default";
                 countryntsc = " Country: NTSC";
                 countrypal = " Country: PAL";
-                Asaveconf = "A: Save config";
+                Asaveconf = "(A): Save config";
                 directoriesNO = "Cannot delete directories!";
-                bexit = "B: Exit";
+                bexit = "(B): Exit";
                 deletefile = "Delete this file?";
-                aconfirm = "A: Confirm";
-                znpage = "Z: Next page";
+                aconfirm = "(A): Confirm";
+                znpage = "(Z): Next page";
                 fcontents = "File contents:";
                 freebock = "[Free]";
                 freespace = "Free space:";
@@ -5020,14 +5022,15 @@ int main(void)
                 saveflash = "Guardado: FLASHRAM";
                 OpComsucc = "Operacion completada exitosamente...";
                 mpksub = "Subsistema Mempak:";
-                backnew = "  A: Copiar contenido";
-                formatt = "  R: Formatear";
-                abortmen = "  B: Abortar";
+                viewmpk = "  (Z): Ver contenido";
+                backnew = "  (A): Copiar contenido";
+                formatt = "  (R): Formatear";
+                abortmen = "  (B): Abortar";
                 restoreback = "L=Restaurar  R=Copiar";
                 confreq = "Confirmacion requirida:";
                 aresure = "     Seguro?";
-                cupcont = "  C-ARRIBA Continuar ";
-                cancelmenu = "      B Cancelar";
+                cupcont = "(C-ARRIBA): Continuar ";
+                cancelmenu = "  (B): Cancelar";
                 romconfig = "Ajustes de la Rom:";
                 updatelastgamerecord = "Actualizando archivo de guardado...";
                 ramarea2sd = "Area de RAM copiada a la SD.";
@@ -5051,17 +5054,17 @@ int main(void)
                 ratrare = "  Puntos: Raro";
                 ratepic = "  Puntos: Epico";
                 ratlegend = "  Puntos: Legendario";
-                bcancel = "B: Cancelar";
+                bcancel = "(B): Cancelar";
                 countrydef = "    Pais: Por defecto";
                 countryntsc = "    Pais: NTSC";
                 countrypal = "    Pais: PAL";
-                Asaveconf = "A: Guardar config";
-                directoriesNO = "No puedes borrar directorios!";
-                bexit = "B: Salir";
+                Asaveconf = "(A): Guardar ajustes";
+                directoriesNO = "No puedes borrar carpetas!";
+                bexit = "(B): Salir";
                 deletefile = "Borrar este archivo?";
-                aconfirm = "A: Confirmar";
-                znpage = "Z: Siguiente pagina";
-                fcontents = "Contenidos:";
+                aconfirm = "(A): Confirmar";
+                znpage = "(Z): Siguiente pagina";
+                fcontents = "Contenido:";
                 freebock = "[Libre]";
                 freespace = "Espacio libre:";
                 blocks = "%i bloques";
@@ -5083,13 +5086,13 @@ int main(void)
                 controlsmenucon = "         - Controles -";
                 showmpkmenu = " (L): Ver menu del mempak ";
                 aboutscreen = " (Z): Informacion";
-                Astartromdirectory = "(A): Iniciar rom/directorio";
+                Astartromdirectory = "(A): Iniciar rom/abrir carpeta";
                 Amempak = "       mempak";
                 Bbackcancel = " (B): Volver/cancelar";
                 Startlastrom = " (START): Iniciar la ultima rom";
                 CLEFT = " (C-Izquierda): Rom info/Mempak";
                 CLEFTVIEMPK = "         Ver contenido";
-                CRIGHT = "(C-Derecha): Config. de la Rom";
+                CRIGHT = "(C-Derecha): Ajustes de la Rom";
                 CUP = " (C-Arriba): Ver nombre entero";
                 CDOWN = " (C-Abajo): Toplist 15";
                 LplusR = "  (R) + (L): Borrar archivo";
@@ -5145,8 +5148,9 @@ int main(void)
 		FILINFO fnoba;
 		FRESULT fresult = f_stat(backup_flag_path, &fnoba);
 		if (fresult == FR_OK)
-			fast_boot = 1;
-
+		{
+        	fast_boot = 1;
+        }
         //backgrounds from ramfs/libdragonfs
 
         char splash_path[64];

@@ -319,6 +319,76 @@ void view_mpk_file(display_context_t disp, char *mpk_filename)
     }
 }
 
+void view_mpk(display_context_t disp)
+{
+    int err;
+
+    printText("Mempak content:", 11, 5, disp);
+    struct controller_data output;
+    get_accessories_present( &output);
+
+    /* Make sure they don't have a rumble pak inserted instead */
+    switch (identify_accessory(0))
+    {
+    case ACCESSORY_NONE:
+
+        printText(" ", 11, -1, disp);
+        printText("no Mempak", 11, -1, disp);
+        break;
+
+    case ACCESSORY_MEMPAK:
+        if ((err = validate_mempak(0)))
+        {
+            if (err == -3)
+            {
+                printText(" ", 11, -1, disp);
+
+                printText("not formatted", 11, -1, disp);
+            }
+            else
+            {
+                printText(" ", 11, -1, disp);
+                printText("read error", 11, -1, disp);
+            }
+        }
+        else
+        {
+            printText("   ", 11, -1, disp);
+            for (int j = 0; j < 16; j++)
+            {
+                entry_structure_t entry;
+
+                get_mempak_entry(0, j, &entry);
+
+                if (entry.valid)
+                {
+                    char tmp[512];
+                    sprintf(tmp, "%s", entry.name);
+                    printText(tmp, 11, -1, disp);
+                }
+                else
+                {
+                    printText("[free]", 11, -1, disp);
+                }
+            }
+
+            char buff[512];
+            printText("   ", 11, -1, disp);
+            printText("Free space:", 11, -1, disp);
+            sprintf(buff, "%d blocks", get_mempak_free_space(0));
+            printText(buff, 11, -1, disp);
+        }
+        break;
+
+    case ACCESSORY_RUMBLEPAK:
+        printText("RumblePak inserted", 11, -1, disp);
+        break;
+
+    default:
+        break;
+    }
+}
+
 //old function to dump a mempak to a file
 void mpk_to_file(display_context_t disp, char *mpk_filename, int quick)
 {
