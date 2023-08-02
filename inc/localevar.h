@@ -16,6 +16,7 @@ char *saveflash;
 char *OpComsucc;
 char *mpksub;
 char *viewcont;
+char *viewmpk;
 char *backnew;
 char *formatt;
 char *abortmen;

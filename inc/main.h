@@ -13,7 +13,6 @@ void loadrom(display_context_t disp, u8 *buff, int fast);
 void HideSysvolumeinfo(char* fname);
 
 int showThisFolder(int hide_sysfolder, char* fname);
-int showExtension(int show_extension, char* extension);
 
 void readSDcard(display_context_t disp, char *directory);
 int saveTypeToSd(display_context_t disp, char* save_filename ,int type);
