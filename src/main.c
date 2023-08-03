@@ -91,8 +91,8 @@ typedef struct
     int sd_speed;
     int language;
     int save_backup;
-    int show_splash;
-    char *splash_image;
+    /*int show_splash;
+    char *splash_image;*/
 
 
 } configuration;
@@ -191,7 +191,7 @@ static resolution_t res = RESOLUTION_320x240;
 //background sprites
 sprite_t *loadPng(u8 *png_filename);
 sprite_t *background;   //background
-sprite_t *splashscreen; //splash screen
+//sprite_t *splashscreen; //splash screen
 
 //config file theme settings
 u32 border_color_1 = 0xFFFFFFFF; //hex 0xRRGGBBAA AA=transparenxy
@@ -225,9 +225,7 @@ u8 sd_speed = 1;         // 1=25Mhz 2=50Mhz
 u8 hide_sysfolder = 0;
 u8 language = 0;
 u8 save_backup = 1;
-u8 show_splash = 1;
 char *background_image;
-char *splash_image;
 
 //mp3
 int buf_size;
@@ -811,14 +809,6 @@ static int configHandler(void *user, const char *section, const char *name, cons
     {
         pconfig->save_backup = atoi(value);
     }
-    else if(MATCH("ed64", "show_splash"))
-    {
-        pconfig->show_splash = atoi(value);
-    }
-    else if (MATCH("ed64", "splash_image"))
-    {
-        pconfig->splash_image = strdup(value);
-    }
     else if (MATCH("user", "name"))
     {
         pconfig->name = strdup(value);
@@ -927,7 +917,7 @@ void romInfoScreen(display_context_t disp, u8 *buff, int silent)
 
     FRESULT result;
 
-    int fsize = 512;                 //rom-headersize 4096 but the bootcode is not needed
+    int fsize = 4096;                 //rom-headersize 4096 but the bootcode is not needed
     unsigned char headerdata[fsize]; //1*512
 
     FIL file;
@@ -1464,8 +1454,8 @@ void loadsnesrom(display_context_t disp, TCHAR *rom_path)
             f_close(&romfile);
 
             boot_cic = CIC_6102;
-            boot_save = 2; //flash
-            force_tv = 0;  //no force
+            boot_save = 2; //sram
+            force_tv = 1;  //no force
             cheats_on = 0; //cheats off
             checksum_fix_on = 0;
 
@@ -1510,7 +1500,7 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
     if (result == FR_OK)
     {
         int swapped = 0;
-        int headerfsize = 512; //rom-headersize 4096 but the bootcode is not needed
+        int headerfsize = 4096; //rom-headersize 4096 but the bootcode is not needed
         unsigned char headerdata[headerfsize]; 
         int fsize = f_size(&file);
         int fsizeMB = fsize /1048576; //Bytes in a MB
@@ -2073,8 +2063,6 @@ int readConfigFile(void)
             background_image = config.background_image;
             language = config.language;
             save_backup = config.save_backup;
-            show_splash = config.show_splash;
-            splash_image = config.splash_image;
 
             return 1;
         }
@@ -4836,10 +4824,9 @@ int main(void)
         int sj = evd_readReg(REG_CFG); // not sure if this is needed!
         int save_job = evd_readReg(REG_SAV_CFG); //TODO: or the firmware is V3
 
-        if (save_job != 0 && show_splash != 1)
-        {
+        if (save_job != 0)
             fast_boot = 1;
-        }
+        
         //not gamepads more or less the n64 hardware-controllers
         controller_init();
 
@@ -4893,7 +4880,7 @@ int main(void)
                 fnddb = "Found in db";
                 done = "         Done";
                 done3p = "...Done";
-                romloaded = "Rom loaded";
+                romloaded = "ROM loaded";
                 loadgb = "Loading ROM...";
                 loading = "      Loading...";
                 plgmp3 = "    Playing MP3";
@@ -4915,7 +4902,7 @@ int main(void)
                 aresure = "    Are you sure?";
                 cupcont = "  (C-UP): Continue ";
                 cancelmenu = "    (B): Cancel";
-                romconfig = "Rom configuration:";
+                romconfig = "ROM configuration:";
                 updatelastgamerecord = "Updating last played game record...";
                 ramarea2sd = "RAM area copied to SD card.";
                 cpyingram2SD = "Copying save RAM to SD card...";
@@ -4970,13 +4957,13 @@ int main(void)
                 controlsmenucon = "          - Controls -";
                 showmpkmenu = " (L): Show mempak menu";
                 aboutscreen = " (Z): About screen";
-                Astartromdirectory = "(A): Start rom/directory";
+                Astartromdirectory = "(A): Start ROM/directory";
                 Amempak = "         mempak";
                 Bbackcancel = " (B): Back/Cancel";
-                Startlastrom = "  (START): Start last rom";
-                CLEFT = " (C-Left): Rom info/Mempak";
+                Startlastrom = "  (START): Start last ROM";
+                CLEFT = " (C-Left): ROM info/Mempak";
                 CLEFTVIEMPK = "         Content View";
-                CRIGHT = " (C-Right): Rom config creen";
+                CRIGHT = " (C-Right): ROM config creen";
                 CUP = "   (C-Up): View full filename";
                 CDOWN = " (C-Down): Toplist 15";
                 LplusR = "  (R) + (L): Delete file";
@@ -5009,7 +4996,7 @@ int main(void)
                 fnddb = "Encontrado en BD";
                 done = "        Hecho";
                 done3p = "...Hecho";
-                romloaded = "Rom cargada";
+                romloaded = "ROM cargada";
                 loadgb = "Cargando ROM...";
                 loading = "     Cargando...";
                 plgmp3 = "  Reproduciendo MP3";
@@ -5031,7 +5018,7 @@ int main(void)
                 aresure = "     Seguro?";
                 cupcont = "(C-ARRIBA): Continuar ";
                 cancelmenu = "  (B): Cancelar";
-                romconfig = "Ajustes de la Rom:";
+                romconfig = "Ajustes de la ROM:";
                 updatelastgamerecord = "Actualizando archivo de guardado...";
                 ramarea2sd = "Area de RAM copiada a la SD.";
                 cpyingram2SD = "Copiando RAM a la SD...";
@@ -5089,10 +5076,10 @@ int main(void)
                 Astartromdirectory = "(A): Iniciar rom/abrir carpeta";
                 Amempak = "       mempak";
                 Bbackcancel = " (B): Volver/cancelar";
-                Startlastrom = " (START): Iniciar la ultima rom";
-                CLEFT = " (C-Izquierda): Rom info/Mempak";
+                Startlastrom = " (START): Iniciar la ultima ROM";
+                CLEFT = " (C-Izquierda): ROM info/Mempak";
                 CLEFTVIEMPK = "         Ver contenido";
-                CRIGHT = "(C-Derecha): Ajustes de la Rom";
+                CRIGHT = "(C-Derecha): Ajustes de la ROM";
                 CUP = " (C-Arriba): Ver nombre entero";
                 CDOWN = " (C-Abajo): Toplist 15";
                 LplusR = "  (R) + (L): Borrar archivo";
@@ -5148,16 +5135,16 @@ int main(void)
 		FILINFO fnoba;
 		FRESULT fresult = f_stat(backup_flag_path, &fnoba);
 		if (fresult == FR_OK)
-		{
         	fast_boot = 1;
-        }
-        //backgrounds from ramfs/libdragonfs
-
-        char splash_path[64];
-        sprintf(splash_path, "/"ED64_FIRMWARE_PATH"/wallpaper/%s", splash_image);
 
         FRESULT fr;
         FILINFO fno;
+
+        //backgrounds from ramfs/libdragonfs
+
+        /*char splash_path[64];
+        sprintf(splash_path, "/"ED64_FIRMWARE_PATH"/wallpaper/%s", splash_image);
+
 
         if (!fast_boot)
         {
@@ -5183,7 +5170,7 @@ int main(void)
                     sleep(10);
                 }
             }
-        }
+        }*/
 
         char background_path[64];
         sprintf(background_path, "/"ED64_FIRMWARE_PATH"/wallpaper/%s", background_image);
