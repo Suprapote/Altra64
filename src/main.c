@@ -91,8 +91,6 @@ typedef struct
     int sd_speed;
     int language;
     int save_backup;
-    /*int show_splash;
-    char *splash_image;*/
 
 
 } configuration;
@@ -191,7 +189,6 @@ static resolution_t res = RESOLUTION_320x240;
 //background sprites
 sprite_t *loadPng(u8 *png_filename);
 sprite_t *background;   //background
-//sprite_t *splashscreen; //splash screen
 
 //config file theme settings
 u32 border_color_1 = 0xFFFFFFFF; //hex 0xRRGGBBAA AA=transparenxy
@@ -1476,19 +1473,6 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
     display_show(disp);
     printText(loadgb, 3, 4, disp);
 
-    // Add the backup save flag file.
-	TCHAR backup_flag_path[32];
-	sprintf(backup_flag_path, "/"ED64_FIRMWARE_PATH"/%s/BACKUPSAVE.CFG", save_path);
-
-	FILINFO fnoba;
-	FRESULT fresult = f_stat(backup_flag_path, &fnoba);
-	if (fresult != FR_OK) 
-	{
-        FIL file;
-        f_open(&file, backup_flag_path, FA_WRITE | FA_CREATE_ALWAYS);
-		f_close(&file);
-	}
-
     TCHAR filename[MAX_SUPPORTED_PATH_LEN];
     sprintf(filename, "%s", buff);
 
@@ -1860,15 +1844,6 @@ int saveTypeFromSd(display_context_t disp, char *rom_name, int stype)
 
 int saveTypeToSd(display_context_t disp, char *rom_name, int stype)
 {
-    // Delete the backup save flag.
-	TCHAR backup_flag_path[32];
-	sprintf(backup_flag_path, "/"ED64_FIRMWARE_PATH"/%s/BACKUPSAVE.CFG", save_path);
-
-	FILINFO fflag;
-	FRESULT fresult = f_stat(backup_flag_path, &fflag);
-	if (fresult == FR_OK) 
-		f_unlink(backup_flag_path);
-
     //after reset create new savefile
     const char* save_type_extension = saveTypeToExtension(stype, ext_type);
     TCHAR fname[MAX_SUPPORTED_PATH_LEN];
@@ -4875,7 +4850,7 @@ int main(void)
 
         switch(language)
         {
-            case 0:
+            default:
                 dirempty = "Dir empty...";
                 fnddb = "Found in db";
                 done = "         Done";
@@ -5128,49 +5103,11 @@ int main(void)
         //Grab a render buffer
         while (!(disp = display_lock()))
             ;
-            
-		TCHAR backup_flag_path[32];
-		sprintf(backup_flag_path, "/"ED64_FIRMWARE_PATH"/%s/BACKUPSAVE.CFG", save_path);
-
-		FILINFO fnoba;
-		FRESULT fresult = f_stat(backup_flag_path, &fnoba);
-		if (fresult == FR_OK)
-        	fast_boot = 1;
 
         FRESULT fr;
         FILINFO fno;
 
         //backgrounds from ramfs/libdragonfs
-
-        /*char splash_path[64];
-        sprintf(splash_path, "/"ED64_FIRMWARE_PATH"/wallpaper/%s", splash_image);
-
-
-        if (!fast_boot)
-        {
-            fr = f_stat(splash_path, &fno);
-
-            if (fr == FR_OK)
-            {
-                splashscreen = loadPng(splash_path);
-            }
-            else
-            {
-                splashscreen = read_sprite("rom://sprites/splash.sprite");
-            }
-            graphics_draw_sprite(disp, 0, 0, splashscreen); //start-picture
-            display_show(disp);
-
-            if (sound_on)
-            {
-                playSound(1);
-                for (int s = 0; s < 200; s++) //todo: this blocks for 2 seconds (splashscreen)! is there a better way before the main loop starts!
-                {
-                    sndUpdate();
-                    sleep(10);
-                }
-            }
-        }*/
 
         char background_path[64];
         sprintf(background_path, "/"ED64_FIRMWARE_PATH"/wallpaper/%s", background_image);

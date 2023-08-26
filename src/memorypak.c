@@ -10,15 +10,13 @@
 #include "types.h"
 #include "mempak.h"
 #include "memorypak.h"
-#include "constants.h"
 #include "ff.h"
 #include "menu.h"
 #include "debug.h"
 #include "strlib.h"
 #include "sys.h"
 #include "localevar.h"
-#include <stdlib.h>
-
+#include "constants.h"
 
 enum MemoryPakFormat
 {
@@ -30,13 +28,13 @@ enum MemoryPakFormat
 static uint8_t mempak_data[128 * 256];
 char *mempak_path;
 
-char ___TranslateNotes(char *bNote, char *Text)
+char ___TranslateNotes(uint8_t *bNote, char *Text)
 {
-//#pragma warning(disable : 4305 4309)
+#pragma warning(disable : 4305 4309)
     char cReturn = 0x00;
     const char aSpecial[] = {0x21, 0x22, 0x23, 0x60, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x3A, 0x3D, 0x3F, 0x40, 0x74, 0xA9, 0xAE};
                         //  { '!' , '\"', '#' , '`' , '*' , '+' , ',' , '-' , '.' , '/' , ':' , '=' , '?' , '>' , 'tm', '(r)','(c)' };
-//#pragma warning(default : 4305 4309)
+#pragma warning(default : 4305 4309)
     int i = 16;
     do
     {
@@ -75,7 +73,7 @@ char ___TranslateNotes(char *bNote, char *Text)
     return cReturn;
 }
 
-char ___CountBlocks(char *bMemPakBinary, char *aNoteSizes)
+char ___CountBlocks(uint8_t *bMemPakBinary, char *aNoteSizes)
 {
     int wRemainingBlocks = 123;
     char bNextIndex;
@@ -323,7 +321,7 @@ void view_mpk(display_context_t disp)
 {
     int err;
 
-    printText("Mempak content:", 11, 5, disp);
+    printText("CPak content:", 11, 5, disp);
     struct controller_data output;
     get_accessories_present( &output);
 
