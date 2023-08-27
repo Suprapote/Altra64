@@ -9,8 +9,8 @@ Based on [a fork of alt64](https://github.com/parasyte/alt64) which was original
 
 ## Setup
 1. Format your SD card to FAT32.
-2. Extract the contents of ALTRA64.zip into the root of your SD card.
-3. Change ALT64.ini to your hearts content.
+2. Extract the contents of ZIP file into the root of your SD card.
+3. Change ALTRA64.ini to your hearts content.
 4. Add legally obtained ROMs.
 5. Insert the SD card into the ED64plus and enjoy!
 
