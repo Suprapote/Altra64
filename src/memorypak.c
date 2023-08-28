@@ -321,7 +321,7 @@ void view_mpk(display_context_t disp)
 {
     int err;
 
-    printText("CPak content:", 11, 5, disp);
+    printText("Mempak content:", 11, 5, disp);
     struct controller_data output;
     get_accessories_present( &output);
 

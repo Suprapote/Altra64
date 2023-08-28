@@ -1433,7 +1433,7 @@ void loadsnesrom(display_context_t disp, TCHAR *rom_path)
         if (result == FR_OK)
         {
             int romfsize = f_size(&romfile);
-            uint32_t Offset = 0x104000;
+            uint32_t Offset = 0x200000;
 
             result =
             f_read (

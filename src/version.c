@@ -5,7 +5,7 @@
 
 #include "version.h"
 
-#define ALTRA64_VERSION "3.6.6"
+#define ALTRA64_VERSION "3.6.9"
 
 const char* Altra64_GetVersionString(void)
 {
