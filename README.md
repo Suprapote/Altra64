@@ -4,13 +4,13 @@
 
 Alternative Everdrive64 menu
 
-`Altra64` is an open source menu for [Everdrive64](http://krikzz.com/) and [ED64+](http://ed64p.com/)<br>
+`Altra64` is an open source menu for [Everdrive64](http://krikzz.com/) and ED64+<br>
 Based on [a fork of alt64](https://github.com/parasyte/alt64) which was originally written by saturnu, and released on the [Everdrive64 forum](http://krikzz.com/forum/index.php?topic=816.0).
 
 ## Setup
 1. Format your SD card to FAT32.
-2. Extract the contents of ZIP file into the root of your SD card.
-3. Change ALTRA64.ini to your hearts content.
+2. Extract the contents of ALTRA64.zip into the root of your SD card.
+3. Change ALT64.ini to your hearts content.
 4. Add legally obtained ROMs.
 5. Insert the SD card into the ED64plus and enjoy!
 
@@ -33,18 +33,17 @@ Based on [a fork of alt64](https://github.com/parasyte/alt64) which was original
 ```
 
 ## Building
-[Automated Builds Here](https://github.com/bakapear/altra64/actions)<br>
+[Stable Releases Here](https://github.com/Suprapote/Altra64)<br>
+[Automated Builds Here](https://github.com/ariahiro64/altra64/actions)<br>
 [Docker Image](https://github.com/ariahiro64/altra64/pkgs/container/altra64)
 
-
-Run in project root to build project:
 ```sh
+# Run in project root to build project:
 sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make
+# Output: bin/OS64P.v64
 ```
-Output: bin/OS64P.v64
-
-Run in project root to clean project from build objects:
-```sh
+```
+# Run in project root to clean project from build objects:
 sudo docker run --rm -v "$(pwd):/build" ghcr.io/ariahiro64/altra64:master make clean
 ```
 
