@@ -1081,277 +1081,16 @@ sprite_t *loadPng(u8 *png_filename)
 
 }
 
-void loadgbrom(display_context_t disp, TCHAR *rom_path)
+void loadgenericrom(display_context_t disp, TCHAR *rom_path, u8 *extension)
 {
     printText(loadgb, 3, 4, disp);
     FRESULT result;
     FIL emufile;
     UINT emubytesread;
-    result = f_open(&emufile, "/"ED64_FIRMWARE_PATH"/gb.v64", FA_READ);
-
-    if (result == FR_OK)
-    {
-        int emufsize = f_size(&emufile);
-        //load gb emulator
-        result =
-        f_read (
-            &emufile,        /* [IN] File object */
-            (void *)0xb0000000,  /* [OUT] Buffer to store read data */
-            emufsize,         /* [IN] Number of bytes to read */
-            &emubytesread    /* [OUT] Number of bytes read */
-        );
-
-        f_close(&emufile);
-
-        //load gb rom
-        FIL romfile;
-        UINT rombytesread;
-        result = f_open(&romfile, rom_path, FA_READ);
-
-        if (result == FR_OK)
-        {
-            int romfsize = f_size(&romfile);
-
-            result =
-            f_read (
-                &romfile,        /* [IN] File object */
-                (void *)0xb0200000,  /* [OUT] Buffer to store read data */
-                romfsize,         /* [IN] Number of bytes to read */
-                &rombytesread    /* [OUT] Number of bytes read */
-            );
-
-            f_close(&romfile);
-
-            boot_cic = CIC_6102;
-            boot_save = 5; //flash
-            force_tv = 0;  //no force
-            cheats_on = 0; //cheats off
-            checksum_fix_on = 0;
-
-            bootRom(disp, 1);
-        }
-    }
-    else
-    {
-        drawShortInfoBox(disp, emunofound, 1);
-    }
-}
-
-void loadgbcrom(display_context_t disp, TCHAR *rom_path)
-{
-    printText(loadgb, 3, 4, disp);
-    FRESULT result;
-    FIL emufile;
-    UINT emubytesread;
-    result = f_open(&emufile, "/"ED64_FIRMWARE_PATH"/gbc.v64", FA_READ);
-
-    if (result == FR_OK)
-    {
-        int emufsize = f_size(&emufile);
-        //load gb emulator
-        result =
-        f_read (
-            &emufile,        /* [IN] File object */
-            (void *)0xb0000000,  /* [OUT] Buffer to store read data */
-            emufsize,         /* [IN] Number of bytes to read */
-            &emubytesread    /* [OUT] Number of bytes read */
-        );
-
-        f_close(&emufile);
-
-        //load gb rom
-        FIL romfile;
-        UINT rombytesread;
-        result = f_open(&romfile, rom_path, FA_READ);
-
-        if (result == FR_OK)
-        {
-            int romfsize = f_size(&romfile);
-
-            result =
-            f_read (
-                &romfile,        /* [IN] File object */
-                (void *)0xb0200000,  /* [OUT] Buffer to store read data */
-                romfsize,         /* [IN] Number of bytes to read */
-                &rombytesread    /* [OUT] Number of bytes read */
-            );
-
-            f_close(&romfile);
-
-            boot_cic = CIC_6102;
-            boot_save = 5; //flash
-            force_tv = 0;  //no force
-            cheats_on = 0; //cheats off
-            checksum_fix_on = 0;
-
-            bootRom(disp, 1);
-        }
-    }
-    else
-    {
-        drawShortInfoBox(disp, emunofound, 1);
-    }
-}
-
-
-void loadggrom(display_context_t disp, TCHAR *rom_path) //TODO: this could be merged with MSX
-{
-
-    FRESULT romresult;
-    FIL romfile;
-    UINT rombytesread;
-    romresult = f_open(&romfile, rom_path, FA_READ);
-
-    if (romresult == FR_OK)
-    {
-        int romfsize = f_size(&romfile);
-
-        //max 512KB rom
-        if (romfsize > 512 * 1024)
-        {
-            //error
-
-            drawShortInfoBox(disp, "  ERROR: ROM > 512KB", 1);
-            input_mapping = abort_screen;
-
-            return;
-        }
-        else
-        {
-            printText(loadgb, 3, 4, disp);
-
-            FRESULT result;
-            FIL file;
-            UINT bytesread;
-            result = f_open(&file, "/"ED64_FIRMWARE_PATH"/UltraSMS.z64", FA_READ);
-        
-            if (result == FR_OK)
-            {
-                int fsize = f_size(&file);
-
-                
-                result =
-                f_read (
-                    &file,        /* [IN] File object */
-                    (void *)0xb0000000,      /* [OUT] Buffer to store read data */
-                    fsize,        /* [IN] Number of bytes to read */
-                    &bytesread    /* [OUT] Number of bytes read */
-                );
-        
-                f_close(&file);
-            
-
-                romresult =
-                f_read (
-                    &romfile,           /* [IN] File object */
-                    (void *)0xb0200000 + 0x1b410,  /* [OUT] Buffer to store read data */ //TODO: why is the offset this particular number
-                    romfsize,           /* [IN] Number of bytes to read */
-                    &rombytesread       /* [OUT] Number of bytes read */
-                );
-
-                f_close(&romfile);
-
-            
-                boot_cic = CIC_6102;
-                boot_save = 0; //save off/cpak
-                force_tv = 0;  //no force
-                cheats_on = 0; //cheats off
-                checksum_fix_on = 0;
-            
-                checksum_sdram();
-                bootRom(disp, 1);
-            }
-        }
-    }
-    else
-    {
-        drawShortInfoBox(disp, emunofound, 1);
-    }
-}
-
-void loadmsx2rom(display_context_t disp, TCHAR *rom_path)
-{
-
-    FRESULT romresult;
-    FIL romfile;
-    UINT rombytesread;
-    romresult = f_open(&romfile, rom_path, FA_READ);
-
-    if (romresult == FR_OK)
-    {
-        int romfsize = f_size(&romfile);
-
-        //max 128KB rom
-        if (romfsize > 128 * 1024)
-        {
-            //error
-
-            drawShortInfoBox(disp, "  ERROR: ROM > 128KB", 1);
-            input_mapping = abort_screen;
-
-            return;
-        }
-        else
-        {
-            printText(loadgb, 3, 4, disp);
-
-            FRESULT result;
-            FIL file;
-            UINT bytesread;
-            result = f_open(&file, "/"ED64_FIRMWARE_PATH"/ultraMSX2.z64", FA_READ);
-        
-            if (result == FR_OK)
-            {
-                int fsize = f_size(&file);
-
-                
-                result =
-                f_read (
-                    &file,        /* [IN] File object */
-                    (void *)0xb0000000,      /* [OUT] Buffer to store read data */
-                    fsize,        /* [IN] Number of bytes to read */
-                    &bytesread    /* [OUT] Number of bytes read */
-                );
-        
-                f_close(&file);
-            
-
-                romresult =
-                f_read (
-                    &romfile,           /* [IN] File object */
-                    (void *)0xb0200000 + 0x2df48,  /* [OUT] Buffer to store read data */ //TODO: why is the offset this particular number
-                    romfsize,           /* [IN] Number of bytes to read */
-                    &rombytesread       /* [OUT] Number of bytes read */
-                );
-
-                f_close(&romfile);
-
-            
-                boot_cic = CIC_6102;
-                boot_save = 0; //save off/cpak
-                force_tv = 0;  //no force
-                cheats_on = 0; //cheats off
-                checksum_fix_on = 0;
-            
-                checksum_sdram();
-                bootRom(disp, 1);
-            }
-        }
-    }
-
-    else
-    {
-        drawShortInfoBox(disp, emunofound, 1);
-    }
-}
-
-void loadnesrom(display_context_t disp, TCHAR *rom_path)
-{
-    printText(loadgb, 3, 4, disp);
-    FRESULT result;
-    FIL emufile;
-    UINT emubytesread;
-    result = f_open(&emufile, "/"ED64_FIRMWARE_PATH"/neon64bu.rom", FA_READ);
+    TCHAR tmp[MAX_SUPPORTED_PATH_LEN];
+    
+    snprintf(tmp, sizeof(tmp), "/"ED64_FIRMWARE_PATH"/emulators/%s.z64", extension);
+    result = f_open(&emufile, tmp, FA_READ);
 
     if (result == FR_OK)
     {
@@ -1401,70 +1140,6 @@ void loadnesrom(display_context_t disp, TCHAR *rom_path)
         drawShortInfoBox(disp, emunofound, 1);
     }
 }
-
-
-void loadsnesrom(display_context_t disp, TCHAR *rom_path)
-{
-    printText(loadgb, 3, 4, disp);
-    FRESULT result;
-    FIL emufile;
-    UINT emubytesread;
-    result = f_open(&emufile, "/"ED64_FIRMWARE_PATH"/sodium64.z64", FA_READ);
-
-    if (result == FR_OK)
-    {
-        int emufsize = f_size(&emufile);
-        //load gb emulator
-        result =
-        f_read (
-            &emufile,        /* [IN] File object */
-            (void *)0xb0000000,  /* [OUT] Buffer to store read data */
-            emufsize,         /* [IN] Number of bytes to read */
-            &emubytesread    /* [OUT] Number of bytes read */
-        );
-
-        f_close(&emufile);
-
-        //load gb rom
-        FIL romfile;
-        UINT rombytesread;
-        result = f_open(&romfile, rom_path, FA_READ);
-
-        if (result == FR_OK)
-        {
-            int romfsize = f_size(&romfile);
-            uint32_t Offset = 0x200000;
-
-            result =
-            f_read (
-                &romfile,        /* [IN] File object */
-                (void *)0xb0000000 + Offset,  /* [OUT] Buffer to store read data */
-                romfsize,         /* [IN] Number of bytes to read */
-                &rombytesread    /* [OUT] Number of bytes read */
-            );
-
-            // Check if there is a header that needs to be removed.
-            if ((romfsize & 0x3FF) == 0x200) {
-                Offset -= 0x200;
-            }
-
-            f_close(&romfile);
-
-            boot_cic = CIC_6102;
-            boot_save = 2; //sram
-            force_tv = 1;  //no force
-            cheats_on = 0; //cheats off
-            checksum_fix_on = 0;
-
-            bootRom(disp, 1);
-        }
-    }
-    else
-    {
-        drawShortInfoBox(disp, emunofound, 1);
-    }
-}
-
 
 //load a z64/v64/n64 rom to the sdram
 void loadrom(display_context_t disp, u8 *buff, int fast)
@@ -3360,20 +3035,10 @@ void loadFile(display_context_t disp)
         ft = 1;
     else if (!strcmp(extension, "MPK"))
         ft = 2;
-    else if (!strcmp(extension, "GB") || !strcmp(extension, "SGB"))
-        ft = 3;
-    else if (!strcmp(extension, "NES"))
-        ft = 4;
-    else if (!strcmp(extension, "GG"))
-        ft = 5;
-    else if (!strcmp(extension, "MSX") || !strcmp(extension, "ROM"))
-        ft = 6;
     else if (!strcmp(extension, "MP3"))
         ft = 7;
-    else if (!strcmp(extension, "GBC"))
-        ft = 8;
-    else if (!strcmp(extension, "SMC") || !strcmp(extension, "SFC"))
-        ft = 9;
+    else
+        ft = 999;
 
     if (ft != 9 || ft != 2)
     {
@@ -3450,22 +3115,6 @@ void loadFile(display_context_t disp)
         input_mapping = mpk_choice;
         sprintf(rom_filename, "%s", name_file);
         break;
-    case 3:
-        loadgbrom(disp, name_file);
-        display_show(disp);
-        break;
-    case 4:
-        loadnesrom(disp, name_file);
-        display_show(disp);
-        break;
-    case 5:
-        loadggrom(disp, name_file);
-        display_show(disp);
-        break;
-    case 6:
-        loadmsx2rom(disp, name_file);
-        display_show(disp);
-        break;
     case 7:
     {
         while (!(disp = display_lock()))
@@ -3492,13 +3141,9 @@ void loadFile(display_context_t disp)
         input_mapping = mp3; //mp3 stop
     }
     break;
-
-    case 8:
-        loadgbcrom(disp, name_file);
-        display_show(disp);
-        break;
-    case 9:
-        loadsnesrom(disp, name_file);
+    
+    case 999:
+        loadgenericrom(disp, name_file, extension);
         display_show(disp);
         break;
 
