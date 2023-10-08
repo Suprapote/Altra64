@@ -109,6 +109,7 @@ extern void *__safe_buffer[];
 
 int firm_found = 0;
 char rom_config[10];
+u32 emu_offset;
 
 display_context_t lockVideo(int wait);
 
@@ -1088,25 +1089,25 @@ void loadgenericrom(display_context_t disp, TCHAR *rom_path, u8 *extension)
     FIL emufile;
     UINT emubytesread;
     TCHAR tmp[MAX_SUPPORTED_PATH_LEN];
-    
-    snprintf(tmp, sizeof(tmp), "/"ED64_FIRMWARE_PATH"/emulators/%s.z64", extension);
+    // everdrive forces .v64, byte order doesnt actually matter
+    snprintf(tmp, sizeof(tmp), "/"ED64_FIRMWARE_PATH"/%s.v64", extension);
     result = f_open(&emufile, tmp, FA_READ);
 
     if (result == FR_OK)
     {
         int emufsize = f_size(&emufile);
-        //load nes emulator
+        //load the emulator
         result =
         f_read (
             &emufile,        /* [IN] File object */
-            (void *)0xb0000000,  /* [OUT] Buffer to store read data */
+            (void *)0xb0000000,  /* [OUT] Buffer to store read data for the emulator */
             emufsize,         /* [IN] Number of bytes to read */
             &emubytesread    /* [OUT] Number of bytes read */
         );
 
         f_close(&emufile);
 
-        //load nes rom
+        //load the rom
         FIL romfile;
         UINT rombytesread;
         result = f_open(&romfile, rom_path, FA_READ);
@@ -1118,18 +1119,19 @@ void loadgenericrom(display_context_t disp, TCHAR *rom_path, u8 *extension)
             result =
             f_read (
                 &romfile,        /* [IN] File object */
-                (void *)0xb0200000,  /* [OUT] Buffer to store read data */
+                (void *)emu_offset,  /* [OUT] Buffer to store read data for the rom */
                 romfsize,         /* [IN] Number of bytes to read */
                 &rombytesread    /* [OUT] Number of bytes read */
             );
 
             f_close(&romfile);
 
-            boot_cic = CIC_6102;
-            boot_save = 2; //SRAM
-            force_tv = 0;  //no force
-            cheats_on = 0; //cheats off
-            checksum_fix_on = 0;
+            boot_cic = rom_config[1] + 1;
+            boot_save = rom_config[2];
+            force_tv = rom_config[3];
+            cheats_on = rom_config[4];
+            checksum_fix_on = rom_config[5];
+            boot_country = rom_config[7]; //boot_block
 
             bootRom(disp, 1);
         }
@@ -2321,9 +2323,18 @@ void readRomConfig(display_context_t disp, char *short_filename, char *full_file
 {
     TCHAR cfg_filename[MAX_SUPPORTED_PATH_LEN];
     sprintf(rom_filename, "%s", short_filename);
+    //grabs the file extention
+    char *extension = strrchr(rom_filename, '.') + 1;
+    //checks if the rom is a n64 one by checking the last 2 chars
+    //this works because n64 roms dont have any supported extensions that are more than 3 chars anyway
+    char *ultracheck = strrchr(rom_filename, '.') + 2;
+    if (!strcmp(ultracheck, "64")) {
     rom_filename[strlen(rom_filename) - 4] = '\0'; // cut extension
     sprintf(cfg_filename, "/"ED64_FIRMWARE_PATH"/CFG/%s.CFG", rom_filename);
-
+    } else {
+    //this only uses one config file for emulators making using altra64s built in configuaton tool work
+    sprintf(cfg_filename, "/"ED64_FIRMWARE_PATH"/CFG/%s.CFG", extension);
+    }
     uint8_t rom_cfg_data[512];
 
     FRESULT result;
@@ -2361,6 +2372,46 @@ void readRomConfig(display_context_t disp, char *short_filename, char *full_file
     {
         //preload with header data
         romInfoScreen(disp, full_filename, 1); //silent info screen with readout
+    }
+}
+void readEmuConfig(display_context_t disp, char *short_filename, char *full_filename)
+{   /*
+    this feature is for emulator developers and emulators that dont use the "krikzz" specification
+    essentially this define custom rom load offsets and stores them in the CFG folder they are 4 bytes long
+    users shouldnt need to use this feature and is for edge cases
+    */
+    TCHAR cfg_filename[MAX_SUPPORTED_PATH_LEN];
+    sprintf(rom_filename, "%s", short_filename);
+    //grabs the file extention, that's all we care about
+    char *extension = strrchr(rom_filename, '.') + 1;
+    sprintf(cfg_filename, "/"ED64_FIRMWARE_PATH"/CFG/%s.OFFSET", extension);
+    u32 emu_cfg_data[4];
+
+    FRESULT result;
+    FIL file;
+    UINT bytesread;
+    result = f_open(&file, cfg_filename, FA_READ);
+
+    if (result == FR_OK)
+    {
+
+        result =
+        f_read (
+            &file,        /* [IN] File object */
+            (void *)emu_cfg_data,  /* [OUT] Buffer to store read data */
+            4,         /* [IN] Number of bytes to read, an offset should never be more than 4 bytes*/
+            &bytesread    /* [OUT] Number of bytes read */
+        );
+
+        f_close(&file);
+
+
+        emu_offset = emu_cfg_data[0];
+    }
+    else
+    {   
+        //this should default to this as this is the krikzz spec
+        emu_offset = 0xb0200000;
     }
 }
 
@@ -2513,6 +2564,7 @@ void alterRomConfig(int type, int mode)
         break;
     }
 }
+
 
 void drawToplistBox(display_context_t disp, int line)
 {
@@ -3143,6 +3195,8 @@ void loadFile(display_context_t disp)
     break;
     
     case 999:
+        readRomConfig(disp, rom_filename, name_file);
+        readEmuConfig(disp, rom_filename, name_file);
         loadgenericrom(disp, name_file, extension);
         display_show(disp);
         break;
