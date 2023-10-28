@@ -224,7 +224,7 @@ int getSRAM( uint8_t *buffer, int size){
 
     while (dma_busy()) ;
 
-    PI_DMAFromSRAM(buffer, 0, size) ;
+    PI_DMAFromSRAM(buffer, 0 - (size - SAVE_SIZE_SRAM), size) ;
 
     while (dma_busy()) ;
 
@@ -300,7 +300,7 @@ int setSRAM(  uint8_t *buffer,int size){
 
     data_cache_hit_writeback_invalidate(buffer,size);
      while (dma_busy());
-    PI_DMAToSRAM(buffer, 0, size);
+    PI_DMAToSRAM(buffer, 0 - (size - SAVE_SIZE_SRAM), size);
     data_cache_hit_writeback_invalidate(buffer,size);
 
     //Wait
