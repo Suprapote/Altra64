@@ -215,7 +215,7 @@ u8 bgm_on = 0;
 u8 page_display = 0;
 u8 tv_mode = 0; // 1=ntsc 2=pal 3=mpal 0=default automatic
 u8 quick_boot = 0;
-u8 enable_colored_list = 0;
+u8 enable_colored_list = 1;
 u8 cd_behaviour = 0;     //0=first entry 1=last entry
 u8 scroll_behaviour = 0; //1=classic 0=new page-system
 u8 ext_type = 0;         //0=classic 1=org os
@@ -1767,73 +1767,71 @@ int showThisFolder(int hide_sysfolder, char* fname)
 }
 
 //prints the sdcard-filesystem content
+
 void readSDcard(display_context_t disp, char *directory)
-{ //TODO: readd coloured list? use a hash table...
-    // FatRecord *frec;
-    // u8 cresp = 0;
+{
+    FRESULT res;
+    DIR dir;
+    static FILINFO fno;
+    int dsize = 0;
+    char colorlist[dsize][32];
 
-    // //load the directory-entry
-    // cresp = fatLoadDirByName("/"ED64_FIRMWARE_PATH"/CFG");
+    if (enable_colored_list)
+    {
+        //TODO: is there a better way we can count the entries perhaps a hashtable?
+        res = f_opendir(&dir, directory);                       /* Open the directory */
+        if (res == FR_OK) {
+            for (;;) {
+                res = f_readdir(&dir, &fno);                   /* Read a directory item */
+                if (res != FR_OK || fno.fname[0] == 0) break;  /* Break on error or end of dir */
+                if (!fno.fattrib & !AM_DIR) {
+                    dsize++;
+                }
+            }
+            f_closedir(&dir);
+        }
+        for (int i = 0; i < dsize; i++)
+        {
+            //frec = dir->rec[i];
+            u8 rom_cfg_file[128];
 
-    // int dsize = dir->size;
-    // char colorlist[dsize][256];
+            //set rom_cfg
+            sprintf(rom_cfg_file, "/"ED64_FIRMWARE_PATH"/CFG/%s", directory);
 
-    // if (enable_colored_list)
-    // {
+            static uint8_t cfg_file_data[512] = {0};
 
-    //     for (int i = 0; i < dir->size; i++)
-    //     {
-    //         frec = dir->rec[i];
-    //         u8 rom_cfg_file[MAX_SUPPORTED_PATH_LEN];
+            FRESULT result;
+            FIL file;
+            UINT bytesread;
+            result = f_open(&file, rom_cfg_file, FA_READ);
 
-    //         //set rom_cfg
-    //         sprintf(rom_cfg_file, "/"ED64_FIRMWARE_PATH"/CFG/%s", frec->name);
+            if (result == FR_OK)
+            {
+                int fsize = f_size(&file);
 
-    //         static uint8_t cfg_file_data[512] = {0};
+                result =
+                f_read (
+                    &file,        /* [IN] File object */
+                    &cfg_file_data,  /* [OUT] Buffer to store read data */
+                    fsize,         /* [IN] Number of bytes to read */
+                    &bytesread    /* [OUT] Number of bytes read */
+                );
 
-    //         FRESULT result;
-    //         FIL file;
-    //         UINT bytesread;
-    //         result = f_open(&file, rom_cfg_file, FA_READ);
+                f_close(&file);
 
-    //         if (result == FR_OK)
-    //         {
-    //             int fsize = f_size(&file);
-
-    //             result =
-    //             f_read (
-    //                 &file,        /* [IN] File object */
-    //                 &cfg_file_data,  /* [OUT] Buffer to store read data */
-    //                 fsize,         /* [IN] Number of bytes to read */
-    //                 &bytesread    /* [OUT] Number of bytes read */
-    //             );
-
-    //             f_close(&file);
-
-    //             colorlist[i][0] = (char)cfg_file_data[5];     //row i column 0 = colour
-    //             strcpy(colorlist[i] + 1, cfg_file_data + 32); //row i column 1+ = fullpath
-
-    //         }
-    //     }
-    // }
-
-    // u8 buff[32];
-
-    // //some trash buffer
-    // FatRecord *rec;
-    // u8 resp = 0;
-
+                colorlist[i][0] = (char)cfg_file_data[5];     //row i column 0 = colour
+                strcpy(colorlist[i] + 1, cfg_file_data + 32); //row i column 1+ = fullpath
+            }
+        }
+    }
+    
     count = 1;
     //dir_t buf;
 
     //clear screen and print the directory name
     clearScreen(disp);
-
-
-    FRESULT res;
-    DIR dir;
+    
     UINT i;
-    static FILINFO fno;
 
 
     res = f_opendir(&dir, directory);                       /* Open the directory */
@@ -1852,26 +1850,20 @@ void readSDcard(display_context_t disp, char *directory)
                 strcpy(list[count - 1].filename, fno.fname);
                 list[count - 1].color = 0;
 
-                // if (enable_colored_list)
-                // {
-                //     for (int c = 0; c < dsize; c++)
-                //     {
-
-                //         u8 short_name[256];
-
-                //         sprintf(short_name, "%s", colorlist[c] + 1);
-
-                //         u8 *pch_s; // point-offset
-                //         pch_s = strrchr(short_name, '/');
-
-                //         if (strcmp(list[count - 1].filename, pch_s + 1) == 0)
-                //         {
-
-                //             list[count - 1].color = colorlist[c][0];
-                //         }
-                //     }
-                //     //new color test end
-                // }
+                if (enable_colored_list)
+                {
+                    for (int c = 0; c < dsize; c++)
+                    {
+                        u8 short_name[256];
+                        sprintf(short_name, "%s", colorlist[c] + 1);
+                        u8 *pch_s;
+                        pch_s = strrchr(short_name, '/');
+                        if ((pch_s != NULL) && (strcmp(list[count - 1].filename, pch_s + 1) == 0))
+                        {
+                            list[count - 1].color = colorlist[c][0];
+                        }
+                    }
+                }
 
                 count++;
                 list = realloc(list, sizeof(direntry_t) * count);
@@ -1882,8 +1874,8 @@ void readSDcard(display_context_t disp, char *directory)
     }
     else
     {
-        char error_msg[32];
-        sprintf(error_msg, "CHDIR ERROR: %i", res);
+        char error_msg[256];
+        //sprintf(error_msg, "CHDIR: %i %i %i %08X %04X %s", res, fat_initialized, result, *((u32*)buff), *((u16*)(buff + 510)), directory);
         printText(error_msg, 3, -1, disp);
         sleep(3000);
     }
