@@ -24,6 +24,10 @@
     })
 #endif
 
+#define KiB(x)          ((x) * 1024)
+#define MiB(x)          ((x) * 1024 * 1024)
+
+
 
 void _sync_bus(void);
 void _data_cache_invalidate_all(void);
