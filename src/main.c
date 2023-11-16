@@ -933,7 +933,7 @@ void romInfoScreen(display_context_t disp, u8 *buff, int silent)
 
     FRESULT result;
 
-    int fsize = 4096;                 //rom-headersize 4096 but the bootcode is not needed
+    int fsize = 512;                 //rom-headersize 4096 but the bootcode is not needed
     unsigned char headerdata[fsize]; //1*512
 
     FIL file;
@@ -942,7 +942,7 @@ void romInfoScreen(display_context_t disp, u8 *buff, int silent)
 
     if (result == FR_OK)
     {
-        int fsizeMB = f_size(&file) / 1048576; //Bytes in a MB
+        int fsizeMB = f_size(&file) / MiB(1); //Bytes in a MB
 
         result =
         f_read (
@@ -1179,10 +1179,10 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
     if (result == FR_OK)
     {
         int swapped = 0;
-        int headerfsize = 4096; //rom-headersize 4096 but the bootcode is not needed
+        int headerfsize = 512; //rom-headersize 4096 but the bootcode is not needed
         unsigned char headerdata[headerfsize]; 
         int fsize = f_size(&file);
-        int fsizeMB = fsize /1048576; //Bytes in a MB
+        int fsizeMB = fsize /MiB(1); //Bytes in a MB
 
         result =
         f_read (
@@ -1289,7 +1289,7 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
 
         bytesread = 0;
         result = f_open(&file, filename, FA_READ);
-        if (fsizeMB <= 32)
+        if (fsizeMB <= MiB(32))
         {
             result =
             f_read (
@@ -1305,7 +1305,7 @@ void loadrom(display_context_t disp, u8 *buff, int fast)
             f_read (
                 &file,        /* [IN] File object */
                 (void *)0xb0000000,  /* [OUT] Buffer to store read data */
-                32 * 1048576,        /* [IN] Number of bytes to read */
+                MiB(32),        /* [IN] Number of bytes to read */
                 &bytesread    /* [OUT] Number of bytes read */
             );
             if(result == FR_OK)

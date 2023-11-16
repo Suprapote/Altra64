@@ -207,7 +207,6 @@ int pushSaveToCart(int stype, uint8_t *buffer){
     return ret;
 }
 
-
 int getSRAM( uint8_t *buffer, int size){
     while (dma_busy()) ;
 
@@ -224,7 +223,14 @@ int getSRAM( uint8_t *buffer, int size){
 
     while (dma_busy()) ;
 
-    PI_DMAFromSRAM(buffer, 0, size) ;
+    if (size >= SAVE_SIZE_SRAM)
+    {
+        PI_DMAFromSRAM(buffer, 0 - KiB(64), size);
+    }
+    else
+    {
+        PI_DMAFromSRAM(buffer, 0, size);
+    }
 
     while (dma_busy()) ;
 
@@ -275,12 +281,14 @@ int getEeprom16k(  uint8_t *buffer){
 
 int getFlashRAM( uint8_t *buffer){
     evd_setSaveType(SAVE_TYPE_SRAM128); //2
-    sleep(FF_MAX_SS);
-
-    int s = getSRAM(buffer, SAVE_SIZE_SRAM128);
+    sleep(512);
+    
     data_cache_hit_writeback_invalidate(buffer, SAVE_SIZE_SRAM128);
+    while (dma_busy());
 
-    sleep(FF_MAX_SS);
+    getSRAM(buffer, SAVE_SIZE_SRAM128);
+
+    sleep(512);
     evd_setSaveType(SAVE_TYPE_FLASH); //5
 
     return 1;
@@ -289,7 +297,7 @@ int getFlashRAM( uint8_t *buffer){
 /*
 sram upload
 */
-int setSRAM(  uint8_t *buffer,int size){
+int setSRAM(  uint8_t *buffer, int size){
      //half working
     PI_DMAWait();
     //Timing
@@ -299,8 +307,15 @@ int setSRAM(  uint8_t *buffer,int size){
     PI_Init();
 
     data_cache_hit_writeback_invalidate(buffer,size);
-     while (dma_busy());
-    PI_DMAToSRAM(buffer, 0, size);
+    while (dma_busy());
+    if (size >= SAVE_SIZE_SRAM)
+    {
+        PI_DMAToSRAM(buffer, 0 - KiB(64), size);
+    }
+    else
+    {
+        PI_DMAToSRAM(buffer, 0, size);
+    }
     data_cache_hit_writeback_invalidate(buffer,size);
 
     //Wait
@@ -309,6 +324,7 @@ int setSRAM(  uint8_t *buffer,int size){
     setSDTiming();
 
     return 1;
+
 }
 
 int setSRAM32( uint8_t *buffer){
@@ -345,16 +361,16 @@ int setEeprom16k(uint8_t *buffer){
     return 1;
 }
 
-
-//isn't working nor finished
 int setFlashRAM(uint8_t *buffer){
     evd_setSaveType(SAVE_TYPE_SRAM128); //2
-    sleep(FF_MAX_SS);
+    sleep(512);
+    
+    data_cache_hit_writeback_invalidate(buffer, SAVE_SIZE_SRAM128);
+    while (dma_busy());
 
-    int s = setSRAM(buffer, SAVE_SIZE_SRAM128);
-    data_cache_hit_writeback_invalidate(buffer,SAVE_SIZE_SRAM128);
+    setSRAM(buffer, SAVE_SIZE_SRAM128);
 
-    sleep(FF_MAX_SS);
+    sleep(512);
     evd_setSaveType(SAVE_TYPE_FLASH); //5
 
     return 1;
