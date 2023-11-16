@@ -54,7 +54,7 @@ int get_cic_save(char *cartid, int *cic, int *save) {
 
     // Banjo-Tooie (B7) -> if not using Ultra CIC set to sram, because the crack converts ek16/eep (4) -> sram (1)
     int saveTypes[] = {
-        0x06, 0x03, 0x05, 0x01, 0x03, 0x01, 0x04, 0x03, 0x03, 0x03,
+        0x02, 0x03, 0x05, 0x01, 0x03, 0x01, 0x04, 0x03, 0x03, 0x03,
         0x03, 0x03, 0x03, 0x05, 0x03, 0x05, 0x03, 0x03, 0x03, 0x04,
         0x05, 0x04, 0x05, 0x03, 0x03, 0x03, 0x03, 0x04, 0x03, 0x03,
         0x04, 0x03, 0x03, 0x01, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
@@ -207,6 +207,7 @@ int pushSaveToCart(int stype, uint8_t *buffer){
     return ret;
 }
 
+
 int getSRAM( uint8_t *buffer, int size){
     while (dma_busy()) ;
 
@@ -225,7 +226,7 @@ int getSRAM( uint8_t *buffer, int size){
 
     if (size >= SAVE_SIZE_SRAM)
     {
-        PI_DMAFromSRAM(buffer, 0 - KiB(64), size);
+        PI_DMAFromSRAM(buffer, 0 - (64 * 1024), size);
     }
     else
     {
@@ -281,14 +282,12 @@ int getEeprom16k(  uint8_t *buffer){
 
 int getFlashRAM( uint8_t *buffer){
     evd_setSaveType(SAVE_TYPE_SRAM128); //2
-    sleep(512);
-    
+    sleep(FF_MAX_SS);
+
+    int s = getSRAM(buffer, SAVE_SIZE_SRAM128);
     data_cache_hit_writeback_invalidate(buffer, SAVE_SIZE_SRAM128);
-    while (dma_busy());
 
-    getSRAM(buffer, SAVE_SIZE_SRAM128);
-
-    sleep(512);
+    sleep(FF_MAX_SS);
     evd_setSaveType(SAVE_TYPE_FLASH); //5
 
     return 1;
@@ -297,7 +296,7 @@ int getFlashRAM( uint8_t *buffer){
 /*
 sram upload
 */
-int setSRAM(  uint8_t *buffer, int size){
+int setSRAM(  uint8_t *buffer,int size){
      //half working
     PI_DMAWait();
     //Timing
@@ -310,7 +309,7 @@ int setSRAM(  uint8_t *buffer, int size){
     while (dma_busy());
     if (size >= SAVE_SIZE_SRAM)
     {
-        PI_DMAToSRAM(buffer, 0 - KiB(64), size);
+        PI_DMAToSRAM(buffer, 0 - (64 * 1024), size);
     }
     else
     {
@@ -324,7 +323,6 @@ int setSRAM(  uint8_t *buffer, int size){
     setSDTiming();
 
     return 1;
-
 }
 
 int setSRAM32( uint8_t *buffer){
@@ -361,16 +359,16 @@ int setEeprom16k(uint8_t *buffer){
     return 1;
 }
 
+
+//isn't working nor finished
 int setFlashRAM(uint8_t *buffer){
     evd_setSaveType(SAVE_TYPE_SRAM128); //2
-    sleep(512);
-    
-    data_cache_hit_writeback_invalidate(buffer, SAVE_SIZE_SRAM128);
-    while (dma_busy());
+    sleep(FF_MAX_SS);
 
-    setSRAM(buffer, SAVE_SIZE_SRAM128);
+    int s = setSRAM(buffer, SAVE_SIZE_SRAM128);
+    data_cache_hit_writeback_invalidate(buffer,SAVE_SIZE_SRAM128);
 
-    sleep(512);
+    sleep(FF_MAX_SS);
     evd_setSaveType(SAVE_TYPE_FLASH); //5
 
     return 1;
