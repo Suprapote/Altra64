@@ -6,7 +6,7 @@
 
 #ifndef _ROM_H
 #define	_ROM_H
-#include "utils.h"
+
 /*
  *
 0000h              (1 byte): initial PI_BSB_DOM1_LAT_REG value (0x80)
@@ -125,15 +125,15 @@
 #define	PHYS_TO_K1(x)	((u32)(x)|0xA0000000)	/* physical to kseg1 */
 #define	K1_TO_PHYS(x)	((u32)(x)&0x1FFFFFFF)	/* kseg1 to physical */
 
-#define	IO_READ(addr)		(*(volatile unsigned long*)PHYS_TO_K1(addr))
-#define	IO_WRITE(addr,data)	(*(volatile unsigned long*)PHYS_TO_K1(addr)=(unsigned long)(data))
+#define	IO_READ(addr)		(*(volatile u32*)PHYS_TO_K1(addr))
+#define	IO_WRITE(addr,data)	(*(volatile u32*)PHYS_TO_K1(addr)=(u32)(data))
 
-#define SAVE_SIZE_SRAM 		KiB(32)
-#define SAVE_SIZE_SRAM128 	KiB(128)
-#define SAVE_SIZE_SRAM768 	KiB(96)
+#define SAVE_SIZE_SRAM 		32768
+#define SAVE_SIZE_SRAM128 	131072
+#define SAVE_SIZE_SRAM768 	98304
 #define SAVE_SIZE_EEP4k 	512
-#define SAVE_SIZE_EEP16k 	KiB(2)
-#define SAVE_SIZE_FLASH 	KiB(128)
+#define SAVE_SIZE_EEP16k 	2048
+#define SAVE_SIZE_FLASH 	131072
 
 #define ROM_ADDR 		0xb0000000
 
